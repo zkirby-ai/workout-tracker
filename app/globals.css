@@ -20,6 +20,7 @@ body {
     radial-gradient(circle at bottom right, rgba(167,139,250,0.12), transparent 22%),
     linear-gradient(180deg, var(--bg2), var(--bg));
 }
+button, input { font: inherit; }
 .shell { width: min(760px, calc(100% - 20px)); margin: 0 auto; padding: 22px 0 48px; }
 .card {
   background: var(--panel);
@@ -40,14 +41,38 @@ h1 { font-size: clamp(2.4rem, 8vw, 4rem); margin: 8px 0; }
 h2 { margin: 6px 0 0; font-size: 1.25rem; }
 .lede { color: var(--muted); max-width: 36rem; }
 .timerCard {
-  min-width: 170px;
+  min-width: 200px;
   padding: 16px;
   border-radius: 18px;
   background: rgba(255,255,255,0.04);
   align-self: center;
 }
-.timerCard span, .metaRow span { color: var(--muted); display: block; }
+.timerCard span, .metaRow span, .progressStat span { color: var(--muted); display: block; }
 .timerCard strong { display: block; font-size: 2rem; margin: 8px 0; }
+.timerActions { display: flex; gap: 8px; margin-top: 12px; }
+.timerActions button, .tab {
+  border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.045);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 9px 12px;
+}
+.splitBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.dayTabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #081018;
+  border-color: transparent;
+  font-weight: 700;
+}
+.progressStat strong { font-size: 1.2rem; }
 .exerciseList { display: grid; gap: 14px; }
 .exerciseCard { padding: 18px; }
 .exerciseHeader {
@@ -70,31 +95,45 @@ h2 { margin: 6px 0 0; font-size: 1.25rem; }
   gap: 10px;
   margin-bottom: 14px;
 }
-.metaRow > div, .setActions input {
+.metaRow > div, .setRow input {
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.05);
   border-radius: 14px;
   padding: 12px;
 }
 .metaRow strong { display: block; margin-top: 6px; font-size: 1.15rem; }
-.setActions {
+.setTable { display: grid; gap: 10px; }
+.setRow {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 90px 1fr 1fr 110px;
   gap: 10px;
+  align-items: center;
 }
-.setActions input {
+.setRow.done { opacity: 0.7; }
+.setNumber {
+  color: var(--muted);
+  font-size: 0.95rem;
+  padding-left: 4px;
+}
+.setRow input {
   color: var(--text);
 }
-.setActions button {
+.setRow button {
   border: 0;
   border-radius: 14px;
-  padding: 0 16px;
+  min-height: 48px;
   font-weight: 700;
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: #081018;
 }
+.setRow button:disabled {
+  background: rgba(52,211,153,0.18);
+  color: #d7fff1;
+}
 @media (max-width: 720px) {
-  .hero { flex-direction: column; }
-  .setActions { grid-template-columns: 1fr 1fr; }
-  .setActions button { min-height: 52px; grid-column: 1 / -1; }
+  .hero, .splitBar { flex-direction: column; align-items: stretch; }
+  .setRow { grid-template-columns: 1fr 1fr; }
+  .setNumber { grid-column: 1 / -1; }
+  .setRow button { grid-column: 1 / -1; }
+  .metaRow { grid-template-columns: 1fr 1fr 1fr; }
 }
