@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { formatRest, workoutDays } from '@/lib/workout-data';
+import { formatRest, workoutDays } from '../lib/workout-data';
 
 type SetLog = {
   weight: string;
