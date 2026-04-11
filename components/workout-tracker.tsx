@@ -74,10 +74,10 @@ export function WorkoutTracker() {
   return (
     <main className="shell">
       <section className="hero card">
-        <div>
-          <p className="eyebrow">today</p>
-          <h1>{currentDay.name}</h1>
-          <p className="lede">Tap through sets fast. Every completed set kicks off the right rest timer automatically.</p>
+        <div className="heroCopy">
+          <p className="eyebrow">tai-lord block</p>
+          <h1>{currentDay.theme}</h1>
+          <p className="lede">{currentDay.focus}</p>
         </div>
         <div className="timerCard">
           <span>Rest Timer</span>
@@ -91,25 +91,27 @@ export function WorkoutTracker() {
       </section>
 
       <section className="card splitBar">
-        <div>
+        <div className="programLabel">
           <p className="eyebrow">program</p>
-          <strong>{currentDay.split} split</strong>
-        </div>
-        <div className="dayTabs">
-          {workoutDays.map((day) => (
-            <button
-              key={day.id}
-              className={day.id === dayId ? 'tab active' : 'tab'}
-              onClick={() => setDayId(day.id)}
-            >
-              {day.name}
-            </button>
-          ))}
+          <strong>5-day Tai-Lord split</strong>
         </div>
         <div className="progressStat">
           <span>Progress</span>
           <strong>{totalCompleted}/{totalSets}</strong>
         </div>
+      </section>
+
+      <section className="dayScroller" aria-label="Workout days">
+        {workoutDays.map((day) => (
+          <button
+            key={day.id}
+            className={day.id === dayId ? 'dayPill active' : 'dayPill'}
+            onClick={() => setDayId(day.id)}
+          >
+            <span>{day.name}</span>
+            <strong>{day.theme.replace('Tai-Lord ', '')}</strong>
+          </button>
+        ))}
       </section>
 
       <section className="exerciseList">
@@ -124,7 +126,7 @@ export function WorkoutTracker() {
                   <p className="eyebrow">{exercise.severity}</p>
                   <h2>{exercise.name}</h2>
                 </div>
-                <span className="restBadge">Rest {formatRest(exercise.restSeconds)}</span>
+                <span className="restBadge">{formatRest(exercise.restSeconds)}</span>
               </div>
 
               <div className="metaRow">
@@ -136,7 +138,16 @@ export function WorkoutTracker() {
               <div className="setTable">
                 {sets.map((set, index) => (
                   <div className={set.completed ? 'setRow done' : 'setRow'} key={`${exercise.id}-${index}`}>
-                    <div className="setNumber">Set {index + 1}</div>
+                    <div className="setTopline">
+                      <div className="setNumber">Set {index + 1}</div>
+                      <button
+                        className="completeButton"
+                        disabled={set.completed}
+                        onClick={() => completeSet(exercise.id, index, exercise.restSeconds, exercise.name)}
+                      >
+                        {set.completed ? 'Done' : 'Complete'}
+                      </button>
+                    </div>
                     <input
                       value={set.weight}
                       onChange={(event) => updateField(exercise.id, index, 'weight', event.target.value)}
@@ -147,12 +158,6 @@ export function WorkoutTracker() {
                       onChange={(event) => updateField(exercise.id, index, 'reps', event.target.value)}
                       placeholder="Reps"
                     />
-                    <button
-                      disabled={set.completed}
-                      onClick={() => completeSet(exercise.id, index, exercise.restSeconds, exercise.name)}
-                    >
-                      {set.completed ? 'Done' : 'Complete'}
-                    </button>
                   </div>
                 ))}
               </div>
