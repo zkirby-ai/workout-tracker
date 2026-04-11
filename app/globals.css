@@ -21,11 +21,7 @@ body {
     linear-gradient(180deg, var(--bg2), var(--bg));
 }
 button, input { font: inherit; }
-.shell {
-  width: min(100%, 540px);
-  margin: 0 auto;
-  padding: 14px 12px 40px;
-}
+.shell { width: min(100%, 540px); margin: 0 auto; padding: 14px 12px 40px; }
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -33,57 +29,25 @@ button, input { font: inherit; }
   box-shadow: 0 20px 50px rgba(0,0,0,0.28);
   backdrop-filter: blur(12px);
 }
-.hero {
+.topTabs {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  padding: 18px;
-  margin-bottom: 12px;
-}
-.heroCopy { min-width: 0; }
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--muted);
-  font-size: 0.68rem;
-}
-h1 {
-  font-size: clamp(2rem, 9vw, 3rem);
-  margin: 8px 0 6px;
-  line-height: 0.95;
-}
-h2 { margin: 4px 0 0; font-size: 1.1rem; }
-.lede { color: var(--muted); max-width: 36rem; margin: 0; }
-.timerCard {
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.04);
-}
-.timerCard span, .metaRow span, .progressStat span { color: var(--muted); display: block; }
-.timerCard strong { display: block; font-size: 2.2rem; margin: 8px 0 4px; }
-.timerCard small { display: block; color: var(--muted); }
-.timerActions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margin-top: 12px;
-}
-.timerActions button, .completeButton {
-  border: 1px solid rgba(255,255,255,0.09);
-  background: rgba(255,255,255,0.045);
-  color: var(--text);
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-.splitBar {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 12px;
-  padding: 14px 16px;
   margin-bottom: 10px;
 }
-.programLabel strong, .progressStat strong { font-size: 1rem; }
+.topTab {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px;
+  font-weight: 700;
+}
+.topTab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #081018;
+  border-color: transparent;
+}
 .dayScroller {
   display: grid;
   grid-auto-flow: column;
@@ -104,23 +68,110 @@ h2 { margin: 4px 0 0; font-size: 1.1rem; }
   border-radius: 18px;
   padding: 14px;
 }
-.dayPill span {
-  display: block;
-  color: var(--muted);
-  font-size: 0.78rem;
-  margin-bottom: 4px;
-}
-.dayPill strong {
-  display: block;
-  font-size: 1rem;
-  line-height: 1.2;
-}
+.dayPill span { display: block; color: var(--muted); font-size: 0.78rem; margin-bottom: 4px; }
+.dayPill strong { display: block; font-size: 1rem; line-height: 1.2; }
 .dayPill.active {
   background: linear-gradient(135deg, rgba(125,211,252,0.25), rgba(167,139,250,0.22));
   border-color: rgba(125,211,252,0.35);
 }
-.exerciseList { display: grid; gap: 12px; }
-.exerciseCard { padding: 16px; }
+.nowScreen { padding: 16px; }
+.nowHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.eyebrow { text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); font-size: 0.68rem; }
+.mutedLabel { color: var(--muted); font-size: 0.78rem; display: block; }
+h1 { font-size: clamp(1.8rem, 9vw, 2.8rem); margin: 8px 0 6px; line-height: 0.95; }
+h2 { margin: 4px 0 0; font-size: 1.15rem; }
+.lede { color: var(--muted); margin: 0; }
+.miniProgress {
+  min-width: 84px;
+  text-align: right;
+}
+.miniProgress span, .timerCard span, .metaRow span { color: var(--muted); display: block; }
+.miniProgress strong { font-size: 1.2rem; }
+.timerCard {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
+  margin-bottom: 12px;
+}
+.bigTimer strong { display: block; font-size: 2.4rem; margin: 8px 0 4px; }
+.timerCard small { display: block; color: var(--muted); }
+.timerActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.timerActions button, .secondaryButton {
+  border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.045);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.currentExerciseCard {
+  padding: 2px 0 0;
+}
+.currentMeta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 12px;
+}
+.currentMeta span, .restBadge {
+  border-radius: 999px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-size: 0.82rem;
+}
+.setFocusCard {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.setFocusTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.focusInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.focusInputs input, .setRow input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 14px 12px;
+  color: var(--text);
+  min-height: 50px;
+}
+.primaryAction, .completeButton {
+  width: 100%;
+  border: 0;
+  border-radius: 14px;
+  min-height: 52px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #081018;
+}
+.primaryAction:disabled, .completeButton:disabled {
+  background: rgba(52,211,153,0.18);
+  color: #d7fff1;
+}
+.exerciseList, .progressScreen { display: grid; gap: 12px; }
+.exerciseCard, .progressCard, .doneCard { padding: 16px; }
 .exerciseHeader {
   display: flex;
   justify-content: space-between;
@@ -129,66 +180,33 @@ h2 { margin: 4px 0 0; font-size: 1.1rem; }
   margin-bottom: 12px;
 }
 .restBadge {
-  border-radius: 999px;
-  padding: 8px 10px;
   background: rgba(52,211,153,0.1);
   border: 1px solid rgba(52,211,153,0.2);
   color: #b8f5df;
-  font-size: 0.82rem;
 }
 .metaRow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margin-bottom: 12px;
 }
-.metaRow > div, .setRow input {
+.metaRow > div {
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.05);
   border-radius: 14px;
   padding: 10px 12px;
 }
 .metaRow strong { display: block; margin-top: 4px; font-size: 1.05rem; }
-.setTable { display: grid; gap: 10px; }
-.setRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 10px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.04);
-}
-.setRow.done { opacity: 0.78; }
-.setTopline {
-  grid-column: 1 / -1;
+.progressHistory { display: grid; gap: 8px; }
+.historyRow {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 8px;
-}
-.setNumber {
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-.setRow input {
-  color: var(--text);
-  min-height: 46px;
-}
-.completeButton {
-  min-width: 108px;
-  min-height: 42px;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #081018;
-  border: 0;
-}
-.completeButton:disabled {
-  background: rgba(52,211,153,0.18);
-  color: #d7fff1;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.05);
 }
 @media (min-width: 721px) {
   .shell { width: min(760px, calc(100% - 24px)); padding-top: 22px; }
-  .hero { grid-template-columns: 1fr 220px; align-items: start; }
   .dayScroller { grid-auto-columns: 220px; }
 }
