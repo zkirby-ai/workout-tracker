@@ -45,19 +45,6 @@ export const workoutDays: WorkoutDay[] = [
   {
     id: 'day-3',
     name: 'Day 3',
-    theme: 'Tai-Lord Legs',
-    focus: 'Quads · Hamstrings · Glutes · Calves',
-    exercises: [
-      { id: 'hack-squat', name: 'Hack Squat', sets: 4, reps: '6-10', restSeconds: 180, severity: 'Heavy' },
-      { id: 'rdl', name: 'Romanian Deadlift', sets: 3, reps: '6-8', restSeconds: 180, severity: 'Heavy' },
-      { id: 'leg-press', name: 'Leg Press', sets: 3, reps: '10-12', restSeconds: 120, severity: 'Moderate' },
-      { id: 'leg-curl', name: 'Seated Leg Curl', sets: 3, reps: '10-12', restSeconds: 75, severity: 'Moderate' },
-      { id: 'calf-raise', name: 'Standing Calf Raise', sets: 4, reps: '12-15', restSeconds: 60, severity: 'Light' }
-    ]
-  },
-  {
-    id: 'day-4',
-    name: 'Day 4',
     theme: 'Tai-Lord Push Volume',
     focus: 'Delts · Upper Chest · Triceps',
     exercises: [
@@ -69,8 +56,8 @@ export const workoutDays: WorkoutDay[] = [
     ]
   },
   {
-    id: 'day-5',
-    name: 'Day 5',
+    id: 'day-4',
+    name: 'Day 4',
     theme: 'Tai-Lord Pull Pump',
     focus: 'Mid Back · Lats · Arms',
     exercises: [
