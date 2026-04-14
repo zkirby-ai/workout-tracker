@@ -98,6 +98,8 @@ export function WorkoutTracker() {
     return grouped;
   }, [history]);
 
+  const latestTopWeight = progressByExercise.get(currentExercise.id)?.slice(-1)[0]?.maxWeight ?? null;
+
   function persistHistory(nextHistory: HistoryEntry[]) {
     setHistory(nextHistory);
     window.localStorage.setItem('workout-history', JSON.stringify(nextHistory));
@@ -220,6 +222,7 @@ export function WorkoutTracker() {
                   <span>{currentExercise.severity}</span>
                   <span>{currentExercise.reps}</span>
                   <span>Rest {formatRest(currentExercise.restSeconds)}</span>
+                  {latestTopWeight !== null && <span>Last top {latestTopWeight}</span>}
                 </div>
 
                 <div className="setFocusCard">
