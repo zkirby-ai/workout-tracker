@@ -63,6 +63,7 @@ export function WorkoutTracker() {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeLabel, setActiveLabel] = useState('Starts after set completion');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
 
   useEffect(() => {
     setSetState(makeInitialState(dayId));
@@ -76,6 +77,9 @@ export function WorkoutTracker() {
   useEffect(() => {
     setHistory(loadHistory());
     setTimerState(loadTimerState());
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
   }, []);
 
   useEffect(() => {
@@ -92,6 +96,18 @@ export function WorkoutTracker() {
       setTimerState({ endsAt: null, durationSeconds: 0 });
       window.localStorage.removeItem('workout-timer-state');
       setActiveLabel('Rest complete');
+
+      if (typeof window !== 'undefined') {
+        if ('vibrate' in navigator) {
+          navigator.vibrate?.([200, 120, 200]);
+        }
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Rest complete', {
+            body: 'Time for your next set.',
+            silent: false
+          });
+        }
+      }
     }
   }, [secondsLeft, timerState.endsAt]);
 
@@ -194,6 +210,15 @@ export function WorkoutTracker() {
     setActiveLabel('Rest skipped');
   }
 
+  async function enableNotifications() {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      setNotificationPermission('unsupported');
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+  }
+
   function nextExercise() {
     if (exerciseIndex >= 0 && exerciseIndex < currentDay.exercises.length - 1) {
       const next = currentDay.exercises[exerciseIndex + 1];
@@ -240,6 +265,11 @@ export function WorkoutTracker() {
             <span>Rest Timer</span>
             <strong>{formatRest(secondsLeft)}</strong>
             <small>{activeLabel}</small>
+            {notificationPermission !== 'granted' && (
+              <button className="notifyButton" onClick={enableNotifications}>
+                {notificationPermission === 'unsupported' ? 'Notifications unsupported' : 'Enable rest notifications'}
+              </button>
+            )}
             <div className="timerActions">
               <button onClick={() => adjustTimer(30)}>+30s</button>
               <button onClick={stopTimer}>Skip</button>
