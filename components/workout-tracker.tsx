@@ -19,6 +19,11 @@ type HistoryEntry = {
 
 type Screen = 'now' | 'plan' | 'progress';
 
+type TimerState = {
+  endsAt: number | null;
+  durationSeconds: number;
+};
+
 function makeInitialState(dayId: string) {
   const day = workoutDays.find((item) => item.id === dayId) ?? workoutDays[0];
   return Object.fromEntries(
@@ -39,38 +44,56 @@ function loadHistory(): HistoryEntry[] {
   }
 }
 
+function loadTimerState(): TimerState {
+  if (typeof window === 'undefined') return { endsAt: null, durationSeconds: 0 };
+  try {
+    const raw = window.localStorage.getItem('workout-timer-state');
+    return raw ? (JSON.parse(raw) as TimerState) : { endsAt: null, durationSeconds: 0 };
+  } catch {
+    return { endsAt: null, durationSeconds: 0 };
+  }
+}
+
 export function WorkoutTracker() {
   const [screen, setScreen] = useState<Screen>('now');
   const [dayId, setDayId] = useState(workoutDays[0].id);
   const currentDay = useMemo(() => workoutDays.find((day) => day.id === dayId) ?? workoutDays[0], [dayId]);
   const [setState, setSetState] = useState<Record<string, SetLog[]>>(() => makeInitialState(dayId));
-  const [timer, setTimer] = useState(0);
+  const [timerState, setTimerState] = useState<TimerState>({ endsAt: null, durationSeconds: 0 });
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeLabel, setActiveLabel] = useState('Starts after set completion');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
     setSetState(makeInitialState(dayId));
-    setTimer(0);
+    setTimerState({ endsAt: null, durationSeconds: 0 });
     setActiveLabel('Starts after set completion');
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('workout-timer-state');
+    }
   }, [dayId]);
 
   useEffect(() => {
     setHistory(loadHistory());
+    setTimerState(loadTimerState());
   }, []);
 
   useEffect(() => {
-    if (timer <= 0) return;
     const interval = window.setInterval(() => {
-      setTimer((current) => {
-        if (current <= 1) {
-          window.clearInterval(interval);
-          return 0;
-        }
-        return current - 1;
-      });
+      setNowMs(Date.now());
     }, 1000);
     return () => window.clearInterval(interval);
-  }, [timer]);
+  }, []);
+
+  const secondsLeft = timerState.endsAt ? Math.max(0, Math.ceil((timerState.endsAt - nowMs) / 1000)) : 0;
+
+  useEffect(() => {
+    if (timerState.endsAt && secondsLeft <= 0) {
+      setTimerState({ endsAt: null, durationSeconds: 0 });
+      window.localStorage.removeItem('workout-timer-state');
+      setActiveLabel('Rest complete');
+    }
+  }, [secondsLeft, timerState.endsAt]);
 
   const totalCompleted = currentDay.exercises.reduce((acc, exercise) => {
     return acc + (setState[exercise.id]?.filter((set) => set.completed).length ?? 0);
@@ -84,7 +107,8 @@ export function WorkoutTracker() {
 
   const currentExercise = exerciseIndex >= 0 ? currentDay.exercises[exerciseIndex] : currentDay.exercises[currentDay.exercises.length - 1];
   const currentSets = setState[currentExercise.id] ?? [];
-  const currentSetIndex = Math.max(0, currentSets.findIndex((set) => !set.completed));
+  const pendingSetIndex = currentSets.findIndex((set) => !set.completed);
+  const currentSetIndex = pendingSetIndex >= 0 ? pendingSetIndex : Math.max(0, currentSets.length - 1);
   const activeSet = currentSets[currentSetIndex] ?? currentSets[currentSets.length - 1];
   const dayDone = totalCompleted === totalSets;
 
@@ -105,6 +129,15 @@ export function WorkoutTracker() {
     window.localStorage.setItem('workout-history', JSON.stringify(nextHistory));
   }
 
+  function persistTimer(nextTimer: TimerState) {
+    setTimerState(nextTimer);
+    if (nextTimer.endsAt) {
+      window.localStorage.setItem('workout-timer-state', JSON.stringify(nextTimer));
+    } else {
+      window.localStorage.removeItem('workout-timer-state');
+    }
+  }
+
   function updateField(exerciseId: string, setIndex: number, field: 'weight' | 'reps', value: string) {
     setSetState((current) => ({
       ...current,
@@ -114,23 +147,13 @@ export function WorkoutTracker() {
     }));
   }
 
-  function recordExerciseMax(exerciseId: string) {
-    const exercise = currentDay.exercises.find((item) => item.id === exerciseId);
-    if (!exercise) return;
-    const maxWeight = Math.max(
-      0,
-      ...(setState[exerciseId] ?? []).map((set) => Number.parseFloat(set.weight) || 0)
-    );
-    if (!maxWeight) return;
-
-    const entry: HistoryEntry = {
-      exerciseId,
-      exerciseName: exercise.name,
-      dayName: currentDay.name,
-      maxWeight,
-      timestamp: new Date().toISOString()
+  function startTimer(durationSeconds: number) {
+    const nextTimer = {
+      endsAt: Date.now() + durationSeconds * 1000,
+      durationSeconds
     };
-    persistHistory([...history, entry]);
+    persistTimer(nextTimer);
+    setNowMs(Date.now());
   }
 
   function completeSet(exerciseId: string, setIndex: number, restSeconds: number, exerciseName: string) {
@@ -141,7 +164,7 @@ export function WorkoutTracker() {
       )
     };
     setSetState(nextState);
-    setTimer(restSeconds);
+    startTimer(restSeconds);
     setActiveLabel(`${exerciseName} · Set ${setIndex + 1}`);
 
     const allDoneForExercise = nextState[exerciseId].every((set) => set.completed);
@@ -159,6 +182,16 @@ export function WorkoutTracker() {
         persistHistory([...history, entry]);
       }
     }
+  }
+
+  function adjustTimer(deltaSeconds: number) {
+    if (!timerState.endsAt) return;
+    startTimer(Math.max(0, secondsLeft + deltaSeconds));
+  }
+
+  function stopTimer() {
+    persistTimer({ endsAt: null, durationSeconds: 0 });
+    setActiveLabel('Rest skipped');
   }
 
   function nextExercise() {
@@ -205,58 +238,56 @@ export function WorkoutTracker() {
 
           <div className="timerCard bigTimer">
             <span>Rest Timer</span>
-            <strong>{formatRest(timer)}</strong>
+            <strong>{formatRest(secondsLeft)}</strong>
             <small>{activeLabel}</small>
             <div className="timerActions">
-              <button onClick={() => setTimer((value) => value + 30)}>+30s</button>
-              <button onClick={() => setTimer(0)}>Skip</button>
+              <button onClick={() => adjustTimer(30)}>+30s</button>
+              <button onClick={stopTimer}>Skip</button>
             </div>
           </div>
 
           {!dayDone ? (
-            <>
-              <article className="currentExerciseCard">
-                <p className="eyebrow">do this now</p>
-                <h2>{currentExercise.name}</h2>
-                <div className="currentMeta">
-                  <span>{currentExercise.severity}</span>
-                  <span>{currentExercise.reps}</span>
-                  <span>Rest {formatRest(currentExercise.restSeconds)}</span>
-                  {latestTopWeight !== null && <span>Last top {latestTopWeight}</span>}
+            <article className="currentExerciseCard">
+              <p className="eyebrow">do this now</p>
+              <h2>{currentExercise.name}</h2>
+              <div className="currentMeta">
+                <span>{currentExercise.severity}</span>
+                <span>{currentExercise.reps}</span>
+                <span>Rest {formatRest(currentExercise.restSeconds)}</span>
+                {latestTopWeight !== null && <span>Last top {latestTopWeight}</span>}
+              </div>
+
+              <div className="setFocusCard">
+                <div className="setFocusTop">
+                  <div>
+                    <span className="mutedLabel">Current set</span>
+                    <strong>Set {currentSetIndex + 1} / {currentExercise.sets}</strong>
+                  </div>
+                  <button className="secondaryButton" onClick={nextExercise}>Next exercise</button>
                 </div>
 
-                <div className="setFocusCard">
-                  <div className="setFocusTop">
-                    <div>
-                      <span className="mutedLabel">Current set</span>
-                      <strong>Set {currentSetIndex + 1} / {currentExercise.sets}</strong>
-                    </div>
-                    <button className="secondaryButton" onClick={nextExercise}>Next exercise</button>
-                  </div>
-
-                  <div className="focusInputs">
-                    <input
-                      value={activeSet?.weight ?? ''}
-                      onChange={(event) => updateField(currentExercise.id, currentSetIndex, 'weight', event.target.value)}
-                      placeholder="Max weight"
-                    />
-                    <input
-                      value={activeSet?.reps ?? ''}
-                      onChange={(event) => updateField(currentExercise.id, currentSetIndex, 'reps', event.target.value)}
-                      placeholder="Reps"
-                    />
-                  </div>
-
-                  <button
-                    className="primaryAction"
-                    onClick={() => completeSet(currentExercise.id, currentSetIndex, currentExercise.restSeconds, currentExercise.name)}
-                    disabled={activeSet?.completed}
-                  >
-                    {activeSet?.completed ? 'Set completed' : 'Complete set'}
-                  </button>
+                <div className="focusInputs">
+                  <input
+                    value={activeSet?.weight ?? ''}
+                    onChange={(event) => updateField(currentExercise.id, currentSetIndex, 'weight', event.target.value)}
+                    placeholder="Max weight"
+                  />
+                  <input
+                    value={activeSet?.reps ?? ''}
+                    onChange={(event) => updateField(currentExercise.id, currentSetIndex, 'reps', event.target.value)}
+                    placeholder="Reps"
+                  />
                 </div>
-              </article>
-            </>
+
+                <button
+                  className="primaryAction"
+                  onClick={() => completeSet(currentExercise.id, currentSetIndex, currentExercise.restSeconds, currentExercise.name)}
+                  disabled={activeSet?.completed}
+                >
+                  {activeSet?.completed ? 'Set completed' : 'Complete set'}
+                </button>
+              </div>
+            </article>
           ) : (
             <section className="doneCard">
               <p className="eyebrow">done</p>
