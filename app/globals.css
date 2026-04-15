@@ -118,6 +118,12 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   width: 100%;
   margin-top: 12px;
 }
+.notifyHint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
 .currentExerciseCard {
   padding: 2px 0 0;
 }

@@ -64,6 +64,7 @@ export function WorkoutTracker() {
   const [activeLabel, setActiveLabel] = useState('Starts after set completion');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
+  const [notificationHint, setNotificationHint] = useState('');
 
   useEffect(() => {
     setSetState(makeInitialState(dayId));
@@ -77,8 +78,23 @@ export function WorkoutTracker() {
   useEffect(() => {
     setHistory(loadHistory());
     setTimerState(loadTimerState());
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      setNotificationPermission(Notification.permission);
+    if (typeof window !== 'undefined') {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator && 'standalone' in window.navigator && window.navigator.standalone);
+      const isIPhone = /iPhone|iPad|iPod/i.test(window.navigator.userAgent);
+
+      if ('Notification' in window) {
+        setNotificationPermission(Notification.permission);
+        if (Notification.permission !== 'granted' && isIPhone && !isStandalone) {
+          setNotificationHint('On iPhone, add this app to your Home Screen first, then reopen it to enable notifications.');
+        }
+      } else {
+        setNotificationPermission('unsupported');
+        if (isIPhone && !isStandalone) {
+          setNotificationHint('On iPhone, add this app to your Home Screen to unlock web-app notifications.');
+        } else {
+          setNotificationHint('Notifications are not available in this browser context.');
+        }
+      }
     }
   }, []);
 
@@ -266,9 +282,12 @@ export function WorkoutTracker() {
             <strong>{formatRest(secondsLeft)}</strong>
             <small>{activeLabel}</small>
             {notificationPermission !== 'granted' && (
-              <button className="notifyButton" onClick={enableNotifications}>
-                {notificationPermission === 'unsupported' ? 'Notifications unsupported' : 'Enable rest notifications'}
-              </button>
+              <>
+                <button className="notifyButton" onClick={enableNotifications}>
+                  {notificationPermission === 'unsupported' ? 'Set up notifications' : 'Enable rest notifications'}
+                </button>
+                {notificationHint && <p className="notifyHint">{notificationHint}</p>}
+              </>
             )}
             <div className="timerActions">
               <button onClick={() => adjustTimer(30)}>+30s</button>
