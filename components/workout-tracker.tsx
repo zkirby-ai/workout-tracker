@@ -24,6 +24,13 @@ type TimerState = {
   durationSeconds: number;
 };
 
+type PushSetup = {
+  appSecret: string;
+  apiBase: string;
+  endpoint: string | null;
+  enabled: boolean;
+};
+
 function makeInitialState(dayId: string) {
   const day = workoutDays.find((item) => item.id === dayId) ?? workoutDays[0];
   return Object.fromEntries(
@@ -54,6 +61,25 @@ function loadTimerState(): TimerState {
   }
 }
 
+function loadPushSetup(): PushSetup {
+  if (typeof window === 'undefined') {
+    return { appSecret: '', apiBase: '', endpoint: null, enabled: false };
+  }
+  try {
+    const raw = window.localStorage.getItem('workout-push-setup');
+    return raw ? (JSON.parse(raw) as PushSetup) : { appSecret: '', apiBase: '', endpoint: null, enabled: false };
+  } catch {
+    return { appSecret: '', apiBase: '', endpoint: null, enabled: false };
+  }
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
 export function WorkoutTracker() {
   const [screen, setScreen] = useState<Screen>('now');
   const [dayId, setDayId] = useState(workoutDays[0].id);
@@ -65,6 +91,8 @@ export function WorkoutTracker() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
   const [notificationHint, setNotificationHint] = useState('');
+  const [pushSetup, setPushSetup] = useState<PushSetup>({ appSecret: '', apiBase: '', endpoint: null, enabled: false });
+  const [pushStatus, setPushStatus] = useState('');
 
   useEffect(() => {
     setSetState(makeInitialState(dayId));
@@ -78,6 +106,8 @@ export function WorkoutTracker() {
   useEffect(() => {
     setHistory(loadHistory());
     setTimerState(loadTimerState());
+    setPushSetup(loadPushSetup());
+
     if (typeof window !== 'undefined') {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator && 'standalone' in window.navigator && window.navigator.standalone);
       const isIPhone = /iPhone|iPad|iPod/i.test(window.navigator.userAgent);
@@ -170,6 +200,11 @@ export function WorkoutTracker() {
     }
   }
 
+  function persistPushSetup(nextSetup: PushSetup) {
+    setPushSetup(nextSetup);
+    window.localStorage.setItem('workout-push-setup', JSON.stringify(nextSetup));
+  }
+
   function updateField(exerciseId: string, setIndex: number, field: 'weight' | 'reps', value: string) {
     setSetState((current) => ({
       ...current,
@@ -179,13 +214,38 @@ export function WorkoutTracker() {
     }));
   }
 
-  function startTimer(durationSeconds: number) {
+  async function schedulePushNotification(exerciseName: string, durationSeconds: number) {
+    if (!pushSetup.enabled || !pushSetup.endpoint || !pushSetup.apiBase || !pushSetup.appSecret) return;
+
+    try {
+      await fetch(`${pushSetup.apiBase}/schedule`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-app-secret': pushSetup.appSecret
+        },
+        body: JSON.stringify({
+          endpoint: pushSetup.endpoint,
+          title: 'Rest complete',
+          body: `Time for your next set: ${exerciseName}`,
+          sendAt: new Date(Date.now() + durationSeconds * 1000).toISOString()
+        })
+      });
+    } catch {
+      setPushStatus('Could not schedule background push notification.');
+    }
+  }
+
+  function startTimer(durationSeconds: number, exerciseName?: string) {
     const nextTimer = {
       endsAt: Date.now() + durationSeconds * 1000,
       durationSeconds
     };
     persistTimer(nextTimer);
     setNowMs(Date.now());
+    if (exerciseName) {
+      void schedulePushNotification(exerciseName, durationSeconds);
+    }
   }
 
   function completeSet(exerciseId: string, setIndex: number, restSeconds: number, exerciseName: string) {
@@ -196,7 +256,7 @@ export function WorkoutTracker() {
       )
     };
     setSetState(nextState);
-    startTimer(restSeconds);
+    startTimer(restSeconds, exerciseName);
     setActiveLabel(`${exerciseName} · Set ${setIndex + 1}`);
 
     const allDoneForExercise = nextState[exerciseId].every((set) => set.completed);
@@ -218,7 +278,7 @@ export function WorkoutTracker() {
 
   function adjustTimer(deltaSeconds: number) {
     if (!timerState.endsAt) return;
-    startTimer(Math.max(0, secondsLeft + deltaSeconds));
+    startTimer(Math.max(0, secondsLeft + deltaSeconds), currentExercise.name);
   }
 
   function stopTimer() {
@@ -233,6 +293,54 @@ export function WorkoutTracker() {
     }
     const permission = await Notification.requestPermission();
     setNotificationPermission(permission);
+  }
+
+  async function enableBackgroundPush() {
+    try {
+      if (!pushSetup.appSecret || !pushSetup.apiBase) {
+        setPushStatus('Enter your shared secret and backend URL first.');
+        return;
+      }
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        setPushStatus('Push is not supported in this browser context.');
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission !== 'granted') {
+        setPushStatus('Notification permission was not granted.');
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      const keyResponse = await fetch(`${pushSetup.apiBase}/vapid-public-key`, {
+        headers: { 'x-app-secret': pushSetup.appSecret }
+      });
+      const { publicKey } = await keyResponse.json();
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+
+      await fetch(`${pushSetup.apiBase}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-app-secret': pushSetup.appSecret
+        },
+        body: JSON.stringify({ subscription })
+      });
+
+      const nextSetup = {
+        ...pushSetup,
+        endpoint: subscription.endpoint,
+        enabled: true
+      };
+      persistPushSetup(nextSetup);
+      setPushStatus('Background push is enabled for this device.');
+    } catch {
+      setPushStatus('Push setup failed. On iPhone, make sure this is opened from the Home Screen app.');
+    }
   }
 
   function nextExercise() {
@@ -281,14 +389,27 @@ export function WorkoutTracker() {
             <span>Rest Timer</span>
             <strong>{formatRest(secondsLeft)}</strong>
             <small>{activeLabel}</small>
-            {notificationPermission !== 'granted' && (
-              <>
-                <button className="notifyButton" onClick={enableNotifications}>
-                  {notificationPermission === 'unsupported' ? 'Set up notifications' : 'Enable rest notifications'}
-                </button>
-                {notificationHint && <p className="notifyHint">{notificationHint}</p>}
-              </>
+            <input
+              className="secretInput"
+              value={pushSetup.appSecret}
+              onChange={(event) => persistPushSetup({ ...pushSetup, appSecret: event.target.value })}
+              placeholder="Shared secret"
+            />
+            <input
+              className="secretInput"
+              value={pushSetup.apiBase}
+              onChange={(event) => persistPushSetup({ ...pushSetup, apiBase: event.target.value })}
+              placeholder="Push backend URL (ex: https://your-server.example.com)"
+            />
+            <button className="notifyButton" onClick={enableBackgroundPush}>
+              {pushSetup.enabled ? 'Background push enabled' : 'Enable background push'}
+            </button>
+            {!pushSetup.enabled && notificationPermission !== 'granted' && (
+              <button className="notifyButton" onClick={enableNotifications}>
+                {notificationPermission === 'unsupported' ? 'Set up notifications' : 'Enable local notifications'}
+              </button>
             )}
+            {(notificationHint || pushStatus) && <p className="notifyHint">{pushStatus || notificationHint}</p>}
             <div className="timerActions">
               <button onClick={() => adjustTimer(30)}>+30s</button>
               <button onClick={stopTimer}>Skip</button>
