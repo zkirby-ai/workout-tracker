@@ -222,7 +222,8 @@ export function WorkoutTracker() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-app-secret': pushSetup.appSecret
+          'x-app-secret': pushSetup.appSecret,
+          'bypass-tunnel-reminder': '1'
         },
         body: JSON.stringify({
           endpoint: pushSetup.endpoint,
@@ -314,7 +315,10 @@ export function WorkoutTracker() {
 
       const registration = await navigator.serviceWorker.register('/sw.js');
       const keyResponse = await fetch(`${pushSetup.apiBase}/vapid-public-key`, {
-        headers: { 'x-app-secret': pushSetup.appSecret }
+        headers: {
+          'x-app-secret': pushSetup.appSecret,
+          'bypass-tunnel-reminder': '1'
+        }
       });
       const { publicKey } = await keyResponse.json();
       const subscription = await registration.pushManager.subscribe({
@@ -326,7 +330,8 @@ export function WorkoutTracker() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-app-secret': pushSetup.appSecret
+          'x-app-secret': pushSetup.appSecret,
+          'bypass-tunnel-reminder': '1'
         },
         body: JSON.stringify({ subscription })
       });
