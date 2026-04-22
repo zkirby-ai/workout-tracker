@@ -544,23 +544,3 @@ export function WorkoutTracker() {
     </main>
   );
 }
-                <strong>{entry.maxWeight}</strong>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            );
-          })}
-
-          {progressByExercise.size === 0 && (
-            <section className="doneCard">
-              <p className="eyebrow">progress</p>
-              <h2>No max weights yet</h2>
-              <p className="lede">Finish an exercise with a logged weight and I’ll start building your history automatically.</p>
-            </section>
-          )}
-        </section>
-      )}
-    </main>
-  );
-}
