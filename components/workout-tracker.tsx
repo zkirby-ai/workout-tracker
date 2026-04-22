@@ -31,7 +31,7 @@ type PushSetup = {
   enabled: boolean;
 };
 
-const DEFAULT_PUSH_SECRET = 'AMjh8pJBWicm_5dcF1J22loiqRBq33xmjqjpV61IBSY';
+const DEFAULT_PUSH_SECRET = '3598509926:ZzdnQ1mpJk_hmlzz_Pdbb3j8Ubud4IhP039';
 const DEFAULT_PUSH_API_BASE = 'https://hot-rockets-call.loca.lt';
 
 function makeInitialState(dayId: string) {
