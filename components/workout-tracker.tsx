@@ -31,6 +31,9 @@ type PushSetup = {
   enabled: boolean;
 };
 
+const DEFAULT_PUSH_SECRET = 'AMjh8pJBWicm_5dcF1J22loiqRBq33xmjqjpV61IBSY';
+const DEFAULT_PUSH_API_BASE = 'https://hot-rockets-call.loca.lt';
+
 function makeInitialState(dayId: string) {
   const day = workoutDays.find((item) => item.id === dayId) ?? workoutDays[0];
   return Object.fromEntries(
@@ -394,18 +397,21 @@ export function WorkoutTracker() {
             <span>Rest Timer</span>
             <strong>{formatRest(secondsLeft)}</strong>
             <small>{activeLabel}</small>
-            <input
-              className="secretInput"
-              value={pushSetup.appSecret}
-              onChange={(event) => persistPushSetup({ ...pushSetup, appSecret: event.target.value })}
-              placeholder="Shared secret"
-            />
-            <input
-              className="secretInput"
-              value={pushSetup.apiBase}
-              onChange={(event) => persistPushSetup({ ...pushSetup, apiBase: event.target.value })}
-              placeholder="Push backend URL (ex: https://your-server.example.com)"
-            />
+            <details className="pushDetails">
+              <summary>Push setup</summary>
+              <input
+                className="secretInput"
+                value={pushSetup.appSecret}
+                onChange={(event) => persistPushSetup({ ...pushSetup, appSecret: event.target.value })}
+                placeholder="Shared secret"
+              />
+              <input
+                className="secretInput"
+                value={pushSetup.apiBase}
+                onChange={(event) => persistPushSetup({ ...pushSetup, apiBase: event.target.value })}
+                placeholder="Push backend URL (ex: https://your-server.example.com)"
+              />
+            </details>
             <button className="notifyButton" onClick={enableBackgroundPush}>
               {pushSetup.enabled ? 'Background push enabled' : 'Enable background push'}
             </button>
@@ -519,6 +525,26 @@ export function WorkoutTracker() {
                     <div className="historyRow" key={`${entry.exerciseId}-${entry.timestamp}`}>
                       <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
                       <strong>{entry.maxWeight}</strong>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            );
+          })}
+
+          {progressByExercise.size === 0 && (
+            <section className="doneCard">
+              <p className="eyebrow">progress</p>
+              <h2>No max weights yet</h2>
+              <p className="lede">Finish an exercise with a logged weight and I’ll start building your history automatically.</p>
+            </section>
+          )}
+        </section>
+      )}
+    </main>
+  );
+}
+                <strong>{entry.maxWeight}</strong>
                     </div>
                   ))}
                 </div>

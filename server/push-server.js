@@ -110,12 +110,28 @@ app.post('/schedule', authed, (req, res) => {
     return res.status(404).json({ error: 'subscription not found' });
   }
 
+  db.prepare(`DELETE FROM scheduled_notifications WHERE subscription_id = ? AND status = 'pending'`).run(sub.id);
   db.prepare(`
     INSERT INTO scheduled_notifications (subscription_id, title, body, send_at)
     VALUES (?, ?, ?, ?)
   `).run(sub.id, title, body, sendAt);
 
   res.json({ ok: true });
+});
+
+app.post('/cancel', authed, (req, res) => {
+  const { endpoint } = req.body || {};
+  if (!endpoint) {
+    return res.status(400).json({ error: 'missing endpoint' });
+  }
+
+  const sub = db.prepare('SELECT id FROM subscriptions WHERE endpoint = ? AND disabled_at IS NULL').get(endpoint);
+  if (!sub) {
+    return res.json({ ok: true, cancelled: 0 });
+  }
+
+  const result = db.prepare(`DELETE FROM scheduled_notifications WHERE subscription_id = ? AND status = 'pending'`).run(sub.id);
+  res.json({ ok: true, cancelled: result.changes });
 });
 
 app.post('/cleanup', authed, (_req, res) => {
