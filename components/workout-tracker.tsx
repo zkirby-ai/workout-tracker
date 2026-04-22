@@ -305,8 +305,12 @@ export function WorkoutTracker() {
         setPushStatus('Enter your shared secret and backend URL first.');
         return;
       }
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        setPushStatus('Push is not supported in this browser context.');
+      if (!('serviceWorker' in navigator)) {
+        setPushStatus('Push setup failed: service workers are unavailable in this browser context.');
+        return;
+      }
+      if (!('PushManager' in window)) {
+        setPushStatus('Push setup failed: PushManager is unavailable here.');
         return;
       }
       const permission = await Notification.requestPermission();
@@ -346,8 +350,9 @@ export function WorkoutTracker() {
       };
       persistPushSetup(nextSetup);
       setPushStatus('Background push is enabled for this device.');
-    } catch {
-      setPushStatus('Push setup failed. On iPhone, make sure this is opened from the Home Screen app.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown push setup failure';
+      setPushStatus(`Push setup failed: ${message}`);
     }
   }
 
