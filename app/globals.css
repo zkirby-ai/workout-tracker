@@ -118,6 +118,17 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   width: 100%;
   margin-top: 12px;
 }
+.pushDetails {
+  margin-top: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  padding: 10px 12px 12px;
+}
+.pushDetails summary {
+  cursor: pointer;
+  color: var(--muted);
+}
 .secretInput {
   width: 100%;
   min-width: 0;
@@ -169,6 +180,11 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   gap: 8px;
   margin-bottom: 10px;
 }
+.repsInputRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
 .focusInputs input, .setRow input {
   width: 100%;
   min-width: 0;
@@ -178,6 +194,16 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   padding: 14px 12px;
   color: var(--text);
   min-height: 50px;
+}
+.maxRepButton {
+  border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 0 14px;
+  min-height: 50px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .primaryAction, .completeButton {
   width: 100%;

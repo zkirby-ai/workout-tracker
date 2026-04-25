@@ -460,11 +460,20 @@ export function WorkoutTracker() {
                     onChange={(event) => updateField(currentExercise.id, currentSetIndex, 'weight', event.target.value)}
                     placeholder="Max weight"
                   />
-                  <input
-                    value={activeSet?.reps ?? ''}
-                    onChange={(event) => updateField(currentExercise.id, currentSetIndex, 'reps', event.target.value)}
-                    placeholder="Reps"
-                  />
+                  <div className="repsInputRow">
+                    <input
+                      value={activeSet?.reps ?? ''}
+                      onChange={(event) => updateField(currentExercise.id, currentSetIndex, 'reps', event.target.value)}
+                      placeholder="Reps"
+                    />
+                    <button
+                      type="button"
+                      className="maxRepButton"
+                      onClick={() => updateField(currentExercise.id, currentSetIndex, 'reps', getMaxRepValue(currentExercise.reps))}
+                    >
+                      Max reps
+                    </button>
+                  </div>
                 </div>
 
                 <button
