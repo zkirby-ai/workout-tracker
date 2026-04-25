@@ -531,36 +531,52 @@ export function WorkoutTracker() {
 
       {screen === 'progress' && (
         <section className="progressScreen">
-          {[...progressByExercise.entries()].map(([exerciseId, entries]) => {
-            const latest = entries[entries.length - 1];
-            const maxEver = Math.max(...entries.map((entry) => entry.maxWeight));
-            return (
-              <article className="card progressCard" key={exerciseId}>
-                <div className="exerciseHeader">
-                  <div>
-                    <p className="eyebrow">max weight over time</p>
-                    <h2>{latest.exerciseName}</h2>
-                  </div>
-                  <span className="restBadge">PR {maxEver}</span>
-                </div>
-                <div className="miniChart" aria-hidden="true">
-                  {entries.slice(-6).map((entry) => {
-                    const maxEver = Math.max(...entries.map((item) => item.maxWeight));
-                    const height = Math.max(18, (entry.maxWeight / maxEver) * 100);
-                    return <div key={`${entry.exerciseId}-${entry.timestamp}-bar`} className="miniChartBar" style={{ height: `${height}%` }} />;
-                  })}
-                </div>
-                <div className="progressHistory">
-                  {entries.slice(-6).reverse().map((entry) => (
-                    <div className="historyRow" key={`${entry.exerciseId}-${entry.timestamp}`}>
-                      <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
-                      <strong>{entry.maxWeight}</strong>
+          {[...progressByExercise.entries()]
+            .sort((a, b) => {
+              const keyLiftOrder = ['bench', 'weighted-pullup', 'tbar', 'smith-incline', 'shoulder-press'];
+              const aIndex = keyLiftOrder.indexOf(a[0]);
+              const bIndex = keyLiftOrder.indexOf(b[0]);
+              if (aIndex === -1 && bIndex === -1) return a[1][a[1].length - 1].exerciseName.localeCompare(b[1][b[1].length - 1].exerciseName);
+              if (aIndex === -1) return 1;
+              if (bIndex === -1) return -1;
+              return aIndex - bIndex;
+            })
+            .map(([exerciseId, entries]) => {
+              const latest = entries[entries.length - 1];
+              const maxEver = Math.max(...entries.map((entry) => entry.maxWeight));
+              const isKeyLift = ['bench', 'weighted-pullup', 'tbar', 'smith-incline', 'shoulder-press'].includes(exerciseId);
+              return (
+                <article className="card progressCard" key={exerciseId}>
+                  <div className="exerciseHeader">
+                    <div>
+                      <p className="eyebrow">{isKeyLift ? 'key lift' : 'max weight over time'}</p>
+                      <h2>{latest.exerciseName}</h2>
                     </div>
-                  ))}
-                </div>
-              </article>
-            );
-          })}
+                    <span className="restBadge">PR {maxEver}</span>
+                  </div>
+                  <div className="metaRow progressStats">
+                    <div><span>Latest</span><strong>{latest.maxWeight}</strong></div>
+                    <div><span>PR</span><strong>{maxEver}</strong></div>
+                    <div><span>Entries</span><strong>{entries.length}</strong></div>
+                  </div>
+                  <div className="miniChart" aria-hidden="true">
+                    {entries.slice(-6).map((entry) => {
+                      const maxEver = Math.max(...entries.map((item) => item.maxWeight));
+                      const height = Math.max(18, (entry.maxWeight / maxEver) * 100);
+                      return <div key={`${entry.exerciseId}-${entry.timestamp}-bar`} className="miniChartBar" style={{ height: `${height}%` }} />;
+                    })}
+                  </div>
+                  <div className="progressHistory">
+                    {entries.slice(-6).reverse().map((entry) => (
+                      <div className="historyRow" key={`${entry.exerciseId}-${entry.timestamp}`}>
+                        <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
+                        <strong>{entry.maxWeight}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              );
+            })}
 
           {progressByExercise.size === 0 && (
             <section className="doneCard">
