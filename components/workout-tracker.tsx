@@ -9,6 +9,13 @@ type SetLog = {
   completed: boolean;
 };
 
+function getMaxRepValue(repRange: string) {
+  const match = repRange.match(/(\d+)\s*-\s*(\d+)/);
+  if (match) return match[2];
+  const single = repRange.match(/(\d+)/);
+  return single ? single[1] : '';
+}
+
 type HistoryEntry = {
   exerciseId: string;
   exerciseName: string;
