@@ -32,7 +32,7 @@ type PushSetup = {
 };
 
 const DEFAULT_PUSH_SECRET = '3598509926:ZzdnQ1mpJk_hmlzz_Pdbb3j8Ubud4IhP039';
-const DEFAULT_PUSH_API_BASE = 'https://hot-rockets-call.loca.lt';
+const DEFAULT_PUSH_API_BASE = 'https://push.zkirby.com';
 
 function makeInitialState(dayId: string) {
   const day = workoutDays.find((item) => item.id === dayId) ?? workoutDays[0];

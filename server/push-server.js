@@ -11,7 +11,8 @@ const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:zkirby16@gmail.com';
 const PORT = Number(process.env.PORT || 8787);
 const DB_PATH = process.env.PUSH_DB_PATH || path.join(__dirname, 'push.sqlite');
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '';
+const HOST = process.env.HOST || '127.0.0.1';
 
 if (!APP_SECRET || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
   console.error('Missing WORKOUT_PUSH_SECRET / VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY');
@@ -52,9 +53,45 @@ db.exec(`
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
+const allowedOrigins = CORS_ORIGIN
+  ? CORS_ORIGIN.split(',').map((value) => value.trim()).filter(Boolean)
+  : [];
+
+const rateBuckets = new Map();
+function rateLimit({ windowMs, max }) {
+  return (req, res, next) => {
+    const key = `${req.ip}:${req.path}`;
+    const now = Date.now();
+    const bucket = rateBuckets.get(key);
+    if (!bucket || now > bucket.resetAt) {
+      rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+    if (bucket.count >= max) {
+      return res.status(429).json({ error: 'rate_limited' });
+    }
+    bucket.count += 1;
+    next();
+  };
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of rateBuckets.entries()) {
+    if (now > bucket.resetAt) rateBuckets.delete(key);
+  }
+}, 10 * 60 * 1000).unref();
+
 const app = express();
-app.use(cors({ origin: CORS_ORIGIN }));
-app.use(express.json());
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (!allowedOrigins.length || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  }
+}));
+app.use(express.json({ limit: '32kb' }));
 
 function authed(req, res, next) {
   const secret = req.header('x-app-secret');
@@ -68,11 +105,11 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/vapid-public-key', authed, (_req, res) => {
+app.get('/vapid-public-key', rateLimit({ windowMs: 60 * 1000, max: 30 }), authed, (_req, res) => {
   res.json({ publicKey: VAPID_PUBLIC_KEY });
 });
 
-app.post('/register', authed, (req, res) => {
+app.post('/register', rateLimit({ windowMs: 10 * 60 * 1000, max: 20 }), authed, (req, res) => {
   const sub = req.body?.subscription;
   if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
     return res.status(400).json({ error: 'invalid subscription' });
@@ -99,7 +136,7 @@ app.post('/register', authed, (req, res) => {
   res.json({ ok: true, subscriptionId: row.id });
 });
 
-app.post('/schedule', authed, (req, res) => {
+app.post('/schedule', rateLimit({ windowMs: 60 * 1000, max: 60 }), authed, (req, res) => {
   const { endpoint, title, body, sendAt } = req.body || {};
   if (!endpoint || !title || !body || !sendAt) {
     return res.status(400).json({ error: 'missing fields' });
@@ -119,7 +156,7 @@ app.post('/schedule', authed, (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/cancel', authed, (req, res) => {
+app.post('/cancel', rateLimit({ windowMs: 60 * 1000, max: 60 }), authed, (req, res) => {
   const { endpoint } = req.body || {};
   if (!endpoint) {
     return res.status(400).json({ error: 'missing endpoint' });
@@ -190,6 +227,6 @@ setInterval(() => {
   cleanup();
 }, 15000);
 
-app.listen(PORT, () => {
-  console.log(`Workout push server listening on ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Workout push server listening on ${HOST}:${PORT}`);
 });
