@@ -543,6 +543,13 @@ export function WorkoutTracker() {
                   </div>
                   <span className="restBadge">PR {maxEver}</span>
                 </div>
+                <div className="miniChart" aria-hidden="true">
+                  {entries.slice(-6).map((entry) => {
+                    const maxEver = Math.max(...entries.map((item) => item.maxWeight));
+                    const height = Math.max(18, (entry.maxWeight / maxEver) * 100);
+                    return <div key={`${entry.exerciseId}-${entry.timestamp}-bar`} className="miniChartBar" style={{ height: `${height}%` }} />;
+                  })}
+                </div>
                 <div className="progressHistory">
                   {entries.slice(-6).reverse().map((entry) => (
                     <div className="historyRow" key={`${entry.exerciseId}-${entry.timestamp}`}>

@@ -244,6 +244,20 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   padding: 10px 12px;
 }
 .metaRow strong { display: block; margin-top: 4px; font-size: 1.05rem; }
+.miniChart {
+  height: 110px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+.miniChartBar {
+  width: 100%;
+  min-height: 18px;
+  border-radius: 12px 12px 4px 4px;
+  background: linear-gradient(180deg, var(--accent2), var(--accent));
+}
 .progressHistory { display: grid; gap: 8px; }
 .historyRow {
   display: flex;
