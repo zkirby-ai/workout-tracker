@@ -65,14 +65,21 @@ function loadTimerState(): TimerState {
 }
 
 function loadPushSetup(): PushSetup {
+  const defaults = { appSecret: DEFAULT_PUSH_SECRET, apiBase: DEFAULT_PUSH_API_BASE, endpoint: null, enabled: false };
   if (typeof window === 'undefined') {
-    return { appSecret: '', apiBase: '', endpoint: null, enabled: false };
+    return defaults;
   }
   try {
     const raw = window.localStorage.getItem('workout-push-setup');
-    return raw ? (JSON.parse(raw) as PushSetup) : { appSecret: '', apiBase: '', endpoint: null, enabled: false };
+    if (!raw) return defaults;
+    const parsed = JSON.parse(raw) as PushSetup;
+    return {
+      ...defaults,
+      ...parsed,
+      apiBase: DEFAULT_PUSH_API_BASE
+    };
   } catch {
-    return { appSecret: '', apiBase: '', endpoint: null, enabled: false };
+    return defaults;
   }
 }
 
@@ -410,12 +417,7 @@ export function WorkoutTracker() {
                 onChange={(event) => persistPushSetup({ ...pushSetup, appSecret: event.target.value })}
                 placeholder="Shared secret"
               />
-              <input
-                className="secretInput"
-                value={pushSetup.apiBase}
-                onChange={(event) => persistPushSetup({ ...pushSetup, apiBase: event.target.value })}
-                placeholder="Push backend URL (ex: https://your-server.example.com)"
-              />
+              <p className="notifyHint">Push backend is fixed to https://push.zkirby.com</p>
             </details>
             <button className="notifyButton" onClick={enableBackgroundPush}>
               {pushSetup.enabled ? 'Background push enabled' : 'Enable background push'}
