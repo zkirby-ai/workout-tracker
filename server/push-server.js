@@ -177,14 +177,15 @@ app.post('/cleanup', authed, (_req, res) => {
 });
 
 async function sendDueNotifications() {
+  const nowIso = new Date().toISOString();
   const rows = db.prepare(`
     SELECT n.id, n.title, n.body, s.endpoint, s.p256dh, s.auth
     FROM scheduled_notifications n
     JOIN subscriptions s ON s.id = n.subscription_id
-    WHERE n.status = 'pending' AND n.send_at <= datetime('now') AND s.disabled_at IS NULL
+    WHERE n.status = 'pending' AND n.send_at <= ? AND s.disabled_at IS NULL
     ORDER BY n.send_at ASC
     LIMIT 20
-  `).all();
+  `).all(nowIso);
 
   for (const row of rows) {
     try {
