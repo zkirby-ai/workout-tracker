@@ -21,6 +21,8 @@ type HistoryEntry = {
   exerciseName: string;
   dayName: string;
   maxWeight: number;
+  topSetReps?: number | null;
+  completedSets?: number;
   timestamp: string;
 };
 
@@ -54,6 +56,13 @@ function formatDelta(delta: number | null, unit = 'lb') {
   if (delta === 0) return `Even · ${unit}`;
   const sign = delta > 0 ? '+' : '−';
   return `${sign}${Math.abs(delta)} ${unit}`;
+}
+
+function formatSessionDate(timestamp: string) {
+  return new Date(timestamp).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric'
+  });
 }
 
 type Screen = 'now' | 'plan' | 'progress';
@@ -233,7 +242,10 @@ export function WorkoutTracker() {
     return grouped;
   }, [history]);
 
-  const latestTopWeight = progressByExercise.get(currentExercise.id)?.slice(-1)[0]?.maxWeight ?? null;
+  const currentExerciseHistory = progressByExercise.get(currentExercise.id) ?? [];
+  const latestTopWeight = currentExerciseHistory.slice(-1)[0]?.maxWeight ?? null;
+  const previousSession = currentExerciseHistory.slice(-1)[0] ?? null;
+  const previousSessionTrend = currentExerciseHistory.length > 0 ? getTrendSummary(currentExerciseHistory) : null;
   const keyLiftOrder = ['flat-bench', 'weighted-pullup', 'tbar', 'smith-incline', 'shoulder-press'];
   const sortedProgressEntries = [...progressByExercise.entries()].sort((a, b) => {
     const aIndex = keyLiftOrder.indexOf(a[0]);
@@ -323,13 +335,23 @@ export function WorkoutTracker() {
     const allDoneForExercise = nextState[exerciseId].every((set) => set.completed);
     if (allDoneForExercise) {
       const exercise = currentDay.exercises.find((item) => item.id === exerciseId);
-      const maxWeight = Math.max(0, ...nextState[exerciseId].map((set) => Number.parseFloat(set.weight) || 0));
+      const parsedSets = nextState[exerciseId].map((set) => ({
+        weight: Number.parseFloat(set.weight) || 0,
+        reps: Number.parseInt(set.reps, 10) || 0
+      }));
+      const maxWeight = Math.max(0, ...parsedSets.map((set) => set.weight));
+      const topSet = parsedSets.reduce(
+        (best, set) => (set.weight > best.weight ? set : best),
+        { weight: 0, reps: 0 }
+      );
       if (exercise && maxWeight > 0) {
         const entry: HistoryEntry = {
           exerciseId,
           exerciseName: exercise.name,
           dayName: currentDay.name,
           maxWeight,
+          topSetReps: topSet.reps || null,
+          completedSets: nextState[exerciseId].filter((set) => set.completed).length,
           timestamp: new Date().toISOString()
         };
         persistHistory([...history, entry]);
@@ -494,6 +516,25 @@ export function WorkoutTracker() {
                 <span>Rest {formatRest(currentExercise.restSeconds)}</span>
                 {latestTopWeight !== null && <span>Last top {latestTopWeight}</span>}
               </div>
+
+              {previousSession && previousSessionTrend && (
+                <div className="sessionContextCard">
+                  <div>
+                    <p className="eyebrow">last time on this lift</p>
+                    <strong>
+                      {previousSession.maxWeight} lb
+                      {previousSession.topSetReps ? ` × ${previousSession.topSetReps}` : ''}
+                    </strong>
+                    <small>{formatSessionDate(previousSession.timestamp)} · {previousSession.dayName}</small>
+                  </div>
+                  <div className="sessionTrendPills">
+                    <span className="sessionTrendPill">PR {previousSessionTrend.maxEver}</span>
+                    <span className={previousSessionTrend.deltaFromPrevious !== null && previousSessionTrend.deltaFromPrevious < 0 ? 'sessionTrendPill neutral' : 'sessionTrendPill'}>
+                      {previousSessionTrend.deltaFromPrevious === null ? 'First logged session' : `${formatDelta(previousSessionTrend.deltaFromPrevious)} vs session before`}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               <div className="setFocusCard">
                 <div className="setFocusTop">
