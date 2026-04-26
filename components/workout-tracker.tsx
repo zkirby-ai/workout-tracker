@@ -24,6 +24,38 @@ type HistoryEntry = {
   timestamp: string;
 };
 
+type TrendSummary = {
+  latest: number;
+  previous: number | null;
+  first: number | null;
+  maxEver: number;
+  deltaFromPrevious: number | null;
+  deltaFromFirst: number | null;
+};
+
+function getTrendSummary(entries: HistoryEntry[]): TrendSummary {
+  const latest = entries[entries.length - 1]?.maxWeight ?? 0;
+  const previous = entries.length > 1 ? entries[entries.length - 2].maxWeight : null;
+  const first = entries[0]?.maxWeight ?? null;
+  const maxEver = Math.max(...entries.map((entry) => entry.maxWeight));
+
+  return {
+    latest,
+    previous,
+    first,
+    maxEver,
+    deltaFromPrevious: previous === null ? null : latest - previous,
+    deltaFromFirst: first === null ? null : latest - first
+  };
+}
+
+function formatDelta(delta: number | null, unit = 'lb') {
+  if (delta === null || Number.isNaN(delta)) return 'New';
+  if (delta === 0) return `Even · ${unit}`;
+  const sign = delta > 0 ? '+' : '−';
+  return `${sign}${Math.abs(delta)} ${unit}`;
+}
+
 type Screen = 'now' | 'plan' | 'progress';
 
 type TimerState = {
@@ -550,12 +582,15 @@ export function WorkoutTracker() {
               <div className="keyLiftGrid">
                 {keyLiftProgress.map(([exerciseId, entries]) => {
                   const latest = entries[entries.length - 1];
-                  const maxEver = Math.max(...entries.map((entry) => entry.maxWeight));
+                  const trend = getTrendSummary(entries);
                   return (
                     <div className="keyLiftStat" key={`${exerciseId}-summary`}>
                       <span>{latest.exerciseName}</span>
-                      <strong>{latest.maxWeight}</strong>
-                      <small>PR {maxEver}</small>
+                      <strong>{trend.latest}</strong>
+                      <small>PR {trend.maxEver}</small>
+                      <em className={trend.deltaFromPrevious !== null && trend.deltaFromPrevious < 0 ? 'trendChip down' : 'trendChip'}>
+                        {trend.deltaFromPrevious === null ? 'First logged set' : `${formatDelta(trend.deltaFromPrevious)} vs last time`}
+                      </em>
                     </div>
                   );
                 })}
@@ -575,34 +610,47 @@ export function WorkoutTracker() {
                 </div>
                 {section.items.map(([exerciseId, entries]) => {
                   const latest = entries[entries.length - 1];
-                  const maxEver = Math.max(...entries.map((entry) => entry.maxWeight));
+                  const trend = getTrendSummary(entries);
                   const isKeyLift = keyLiftOrder.includes(exerciseId);
                   return (
-                    <article className="card progressCard" key={exerciseId}>
+                    <article className={isKeyLift ? 'card progressCard keyLiftCard' : 'card progressCard'} key={exerciseId}>
                       <div className="exerciseHeader">
                         <div>
                           <p className="eyebrow">{isKeyLift ? 'key lift' : 'max weight over time'}</p>
                           <h2>{latest.exerciseName}</h2>
                         </div>
-                        <span className="restBadge">PR {maxEver}</span>
+                        <span className="restBadge">PR {trend.maxEver}</span>
+                      </div>
+                      <div className="progressCallout">
+                        <strong>{trend.deltaFromFirst === null ? 'Start logging this lift' : `${formatDelta(trend.deltaFromFirst)} since first log`}</strong>
+                        <span>
+                          {trend.deltaFromPrevious === null
+                            ? 'First entry logged so future sessions can compare against it.'
+                            : trend.deltaFromPrevious > 0
+                              ? `Up ${Math.abs(trend.deltaFromPrevious)} lb from your last entry.`
+                              : trend.deltaFromPrevious < 0
+                                ? `Down ${Math.abs(trend.deltaFromPrevious)} lb from your last entry — still useful signal.`
+                                : 'Matched your last logged top set exactly.'}
+                        </span>
                       </div>
                       <div className="metaRow progressStats">
-                        <div><span>Latest</span><strong>{latest.maxWeight}</strong></div>
-                        <div><span>PR</span><strong>{maxEver}</strong></div>
+                        <div><span>Latest</span><strong>{trend.latest}</strong></div>
+                        <div><span>Last time</span><strong>{trend.previous ?? '—'}</strong></div>
                         <div><span>Entries</span><strong>{entries.length}</strong></div>
                       </div>
                       <div className="miniChart" aria-hidden="true">
                         {entries.slice(-6).map((entry) => {
-                          const maxEver = Math.max(...entries.map((item) => item.maxWeight));
-                          const height = Math.max(18, (entry.maxWeight / maxEver) * 100);
-                          return <div key={`${entry.exerciseId}-${entry.timestamp}-bar`} className="miniChartBar" style={{ height: `${height}%` }} />;
+                          const height = Math.max(18, (entry.maxWeight / trend.maxEver) * 100);
+                          const isPeak = entry.maxWeight === trend.maxEver;
+                          return <div key={`${entry.exerciseId}-${entry.timestamp}-bar`} className={isPeak ? 'miniChartBar peak' : 'miniChartBar'} style={{ height: `${height}%` }} />;
                         })}
                       </div>
                       <div className="progressHistory">
-                        {entries.slice(-6).reverse().map((entry) => (
+                        {entries.slice(-6).reverse().map((entry, index) => (
                           <div className="historyRow" key={`${entry.exerciseId}-${entry.timestamp}`}>
                             <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
                             <strong>{entry.maxWeight}</strong>
+                            {index === 0 && <small>Latest</small>}
                           </div>
                         ))}
                       </div>

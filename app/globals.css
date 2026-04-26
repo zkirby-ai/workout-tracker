@@ -258,15 +258,26 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   border-radius: 12px 12px 4px 4px;
   background: linear-gradient(180deg, var(--accent2), var(--accent));
 }
+.miniChartBar.peak {
+  box-shadow: 0 0 0 1px rgba(125,211,252,0.28), 0 12px 28px rgba(125,211,252,0.18);
+  filter: saturate(1.15);
+}
 .progressHistory { display: grid; gap: 8px; }
 .historyRow {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
   align-items: center;
   padding: 12px 14px;
   border-radius: 14px;
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.05);
+}
+.historyRow small {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.62rem;
 }
 @media (min-width: 721px) {
   .shell { width: min(760px, calc(100% - 24px)); padding-top: 22px; }
@@ -288,7 +299,44 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
 }
 .keyLiftStat span, .keyLiftStat small { display: block; color: var(--muted); }
 .keyLiftStat strong { display: block; font-size: 1.35rem; margin: 6px 0 4px; }
+.trendChip {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(52,211,153,0.12);
+  border: 1px solid rgba(52,211,153,0.24);
+  color: #c8f8e8;
+  font-style: normal;
+  font-size: 0.76rem;
+}
+.trendChip.down {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+  color: var(--text);
+}
 .progressSectionHeader h2 { margin-top: 6px; }
+.progressCallout {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(125,211,252,0.08);
+  border: 1px solid rgba(125,211,252,0.15);
+}
+.progressCallout strong,
+.progressCallout span {
+  display: block;
+}
+.progressCallout span {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.keyLiftCard {
+  border-color: rgba(125,211,252,0.22);
+  box-shadow: 0 20px 56px rgba(0,0,0,0.34), inset 0 0 0 1px rgba(125,211,252,0.08);
+}
 @media (max-width: 520px) {
   .keyLiftGrid { grid-template-columns: 1fr; }
 }
