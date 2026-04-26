@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { formatRest, workoutDays } from '../lib/workout-data';
 
 type SetLog = {
@@ -202,6 +202,17 @@ export function WorkoutTracker() {
   }, [history]);
 
   const latestTopWeight = progressByExercise.get(currentExercise.id)?.slice(-1)[0]?.maxWeight ?? null;
+  const keyLiftOrder = ['flat-bench', 'weighted-pullup', 'tbar', 'smith-incline', 'shoulder-press'];
+  const sortedProgressEntries = [...progressByExercise.entries()].sort((a, b) => {
+    const aIndex = keyLiftOrder.indexOf(a[0]);
+    const bIndex = keyLiftOrder.indexOf(b[0]);
+    if (aIndex === -1 && bIndex === -1) return a[1][a[1].length - 1].exerciseName.localeCompare(b[1][b[1].length - 1].exerciseName);
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
+  const keyLiftProgress = sortedProgressEntries.filter(([exerciseId]) => keyLiftOrder.includes(exerciseId));
+  const secondaryProgress = sortedProgressEntries.filter(([exerciseId]) => !keyLiftOrder.includes(exerciseId));
 
   function persistHistory(nextHistory: HistoryEntry[]) {
     setHistory(nextHistory);
@@ -531,52 +542,76 @@ export function WorkoutTracker() {
 
       {screen === 'progress' && (
         <section className="progressScreen">
-          {[...progressByExercise.entries()]
-            .sort((a, b) => {
-              const keyLiftOrder = ['bench', 'weighted-pullup', 'tbar', 'smith-incline', 'shoulder-press'];
-              const aIndex = keyLiftOrder.indexOf(a[0]);
-              const bIndex = keyLiftOrder.indexOf(b[0]);
-              if (aIndex === -1 && bIndex === -1) return a[1][a[1].length - 1].exerciseName.localeCompare(b[1][b[1].length - 1].exerciseName);
-              if (aIndex === -1) return 1;
-              if (bIndex === -1) return -1;
-              return aIndex - bIndex;
-            })
-            .map(([exerciseId, entries]) => {
-              const latest = entries[entries.length - 1];
-              const maxEver = Math.max(...entries.map((entry) => entry.maxWeight));
-              const isKeyLift = ['bench', 'weighted-pullup', 'tbar', 'smith-incline', 'shoulder-press'].includes(exerciseId);
-              return (
-                <article className="card progressCard" key={exerciseId}>
-                  <div className="exerciseHeader">
-                    <div>
-                      <p className="eyebrow">{isKeyLift ? 'key lift' : 'max weight over time'}</p>
-                      <h2>{latest.exerciseName}</h2>
+          {progressByExercise.size > 0 && (
+            <article className="card progressSummaryCard">
+              <p className="eyebrow">progress dashboard</p>
+              <h2>Key lifts first</h2>
+              <p className="lede">Your anchor lifts stay pinned up top so the progress screen feels more motivational at a glance.</p>
+              <div className="keyLiftGrid">
+                {keyLiftProgress.map(([exerciseId, entries]) => {
+                  const latest = entries[entries.length - 1];
+                  const maxEver = Math.max(...entries.map((entry) => entry.maxWeight));
+                  return (
+                    <div className="keyLiftStat" key={`${exerciseId}-summary`}>
+                      <span>{latest.exerciseName}</span>
+                      <strong>{latest.maxWeight}</strong>
+                      <small>PR {maxEver}</small>
                     </div>
-                    <span className="restBadge">PR {maxEver}</span>
-                  </div>
-                  <div className="metaRow progressStats">
-                    <div><span>Latest</span><strong>{latest.maxWeight}</strong></div>
-                    <div><span>PR</span><strong>{maxEver}</strong></div>
-                    <div><span>Entries</span><strong>{entries.length}</strong></div>
-                  </div>
-                  <div className="miniChart" aria-hidden="true">
-                    {entries.slice(-6).map((entry) => {
-                      const maxEver = Math.max(...entries.map((item) => item.maxWeight));
-                      const height = Math.max(18, (entry.maxWeight / maxEver) * 100);
-                      return <div key={`${entry.exerciseId}-${entry.timestamp}-bar`} className="miniChartBar" style={{ height: `${height}%` }} />;
-                    })}
-                  </div>
-                  <div className="progressHistory">
-                    {entries.slice(-6).reverse().map((entry) => (
-                      <div className="historyRow" key={`${entry.exerciseId}-${entry.timestamp}`}>
-                        <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
-                        <strong>{entry.maxWeight}</strong>
+                  );
+                })}
+              </div>
+            </article>
+          )}
+
+          {[
+            { title: 'Key lifts', eyebrow: 'priority', items: keyLiftProgress },
+            { title: 'Everything else', eyebrow: 'support work', items: secondaryProgress }
+          ].map((section) => (
+            section.items.length > 0 ? (
+              <Fragment key={section.title}>
+                <div className="progressSectionHeader">
+                  <p className="eyebrow">{section.eyebrow}</p>
+                  <h2>{section.title}</h2>
+                </div>
+                {section.items.map(([exerciseId, entries]) => {
+                  const latest = entries[entries.length - 1];
+                  const maxEver = Math.max(...entries.map((entry) => entry.maxWeight));
+                  const isKeyLift = keyLiftOrder.includes(exerciseId);
+                  return (
+                    <article className="card progressCard" key={exerciseId}>
+                      <div className="exerciseHeader">
+                        <div>
+                          <p className="eyebrow">{isKeyLift ? 'key lift' : 'max weight over time'}</p>
+                          <h2>{latest.exerciseName}</h2>
+                        </div>
+                        <span className="restBadge">PR {maxEver}</span>
                       </div>
-                    ))}
-                  </div>
-                </article>
-              );
-            })}
+                      <div className="metaRow progressStats">
+                        <div><span>Latest</span><strong>{latest.maxWeight}</strong></div>
+                        <div><span>PR</span><strong>{maxEver}</strong></div>
+                        <div><span>Entries</span><strong>{entries.length}</strong></div>
+                      </div>
+                      <div className="miniChart" aria-hidden="true">
+                        {entries.slice(-6).map((entry) => {
+                          const maxEver = Math.max(...entries.map((item) => item.maxWeight));
+                          const height = Math.max(18, (entry.maxWeight / maxEver) * 100);
+                          return <div key={`${entry.exerciseId}-${entry.timestamp}-bar`} className="miniChartBar" style={{ height: `${height}%` }} />;
+                        })}
+                      </div>
+                      <div className="progressHistory">
+                        {entries.slice(-6).reverse().map((entry) => (
+                          <div className="historyRow" key={`${entry.exerciseId}-${entry.timestamp}`}>
+                            <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
+                            <strong>{entry.maxWeight}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  );
+                })}
+              </Fragment>
+            ) : null
+          ))}
 
           {progressByExercise.size === 0 && (
             <section className="doneCard">

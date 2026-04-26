@@ -272,3 +272,23 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   .shell { width: min(760px, calc(100% - 24px)); padding-top: 22px; }
   .dayScroller { grid-auto-columns: 220px; }
 }
+
+.progressSummaryCard { padding: 16px; }
+.keyLiftGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.keyLiftStat, .progressSectionHeader {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+.keyLiftStat span, .keyLiftStat small { display: block; color: var(--muted); }
+.keyLiftStat strong { display: block; font-size: 1.35rem; margin: 6px 0 4px; }
+.progressSectionHeader h2 { margin-top: 6px; }
+@media (max-width: 520px) {
+  .keyLiftGrid { grid-template-columns: 1fr; }
+}
