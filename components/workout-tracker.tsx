@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { formatRest, workoutDays } from '../lib/workout-data';
 
 type SetLog = {
@@ -79,8 +79,16 @@ type PushSetup = {
   enabled: boolean;
 };
 
+type WorkoutSessionState = {
+  dayId: string;
+  screen: Screen;
+  setState: Record<string, SetLog[]>;
+  activeLabel: string;
+};
+
 const DEFAULT_PUSH_SECRET = '3598509926:ZzdnQ1mpJk_hmlzz_Pdbb3j8Ubud4IhP039';
 const DEFAULT_PUSH_API_BASE = 'https://push.zkirby.com';
+const DEFAULT_ACTIVE_LABEL = 'Starts after set completion';
 
 function makeInitialState(dayId: string) {
   const day = workoutDays.find((item) => item.id === dayId) ?? workoutDays[0];
@@ -131,6 +139,16 @@ function loadPushSetup(): PushSetup {
   }
 }
 
+function loadWorkoutSessionState() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem('workout-session-state');
+    return raw ? (JSON.parse(raw) as WorkoutSessionState) : null;
+  } catch {
+    return null;
+  }
+}
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -139,23 +157,30 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function WorkoutTracker() {
-  const [screen, setScreen] = useState<Screen>('now');
-  const [dayId, setDayId] = useState(workoutDays[0].id);
+  const initialSessionState = useMemo(() => loadWorkoutSessionState(), []);
+  const [screen, setScreen] = useState<Screen>(initialSessionState?.screen ?? 'now');
+  const [dayId, setDayId] = useState(initialSessionState?.dayId ?? workoutDays[0].id);
   const currentDay = useMemo(() => workoutDays.find((day) => day.id === dayId) ?? workoutDays[0], [dayId]);
-  const [setState, setSetState] = useState<Record<string, SetLog[]>>(() => makeInitialState(dayId));
+  const [setState, setSetState] = useState<Record<string, SetLog[]>>(() => initialSessionState?.setState ?? makeInitialState(initialSessionState?.dayId ?? workoutDays[0].id));
   const [timerState, setTimerState] = useState<TimerState>({ endsAt: null, durationSeconds: 0 });
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [activeLabel, setActiveLabel] = useState('Starts after set completion');
+  const [activeLabel, setActiveLabel] = useState(initialSessionState?.activeLabel ?? DEFAULT_ACTIVE_LABEL);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
   const [notificationHint, setNotificationHint] = useState('');
   const [pushSetup, setPushSetup] = useState<PushSetup>({ appSecret: '', apiBase: '', endpoint: null, enabled: false });
   const [pushStatus, setPushStatus] = useState('');
+  const previousDayIdRef = useRef(dayId);
 
   useEffect(() => {
+    if (previousDayIdRef.current === dayId) {
+      return;
+    }
+
+    previousDayIdRef.current = dayId;
     setSetState(makeInitialState(dayId));
     setTimerState({ endsAt: null, durationSeconds: 0 });
-    setActiveLabel('Starts after set completion');
+    setActiveLabel(DEFAULT_ACTIVE_LABEL);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('workout-timer-state');
     }
@@ -167,6 +192,11 @@ export function WorkoutTracker() {
     setPushSetup(loadPushSetup());
 
     if (typeof window !== 'undefined') {
+      const savedSession = loadWorkoutSessionState();
+      if (savedSession?.dayId === dayId) {
+        previousDayIdRef.current = savedSession.dayId;
+      }
+
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator && 'standalone' in window.navigator && window.navigator.standalone);
       const isIPhone = /iPhone|iPad|iPod/i.test(window.navigator.userAgent);
 
@@ -192,6 +222,19 @@ export function WorkoutTracker() {
     }, 1000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(
+      'workout-session-state',
+      JSON.stringify({
+        dayId,
+        screen,
+        setState,
+        activeLabel
+      } satisfies WorkoutSessionState)
+    );
+  }, [activeLabel, dayId, screen, setState]);
 
   const secondsLeft = timerState.endsAt ? Math.max(0, Math.ceil((timerState.endsAt - nowMs) / 1000)) : 0;
 
