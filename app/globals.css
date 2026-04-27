@@ -1,33 +1,42 @@
 :root {
   color-scheme: dark;
-  --bg: #071019;
-  --bg2: #0d1726;
-  --panel: rgba(17, 24, 39, 0.9);
-  --line: rgba(255,255,255,0.08);
-  --text: #f5f7fb;
-  --muted: #97a3b6;
-  --accent: #7dd3fc;
-  --accent2: #a78bfa;
-  --good: #34d399;
+  --bg: #060b16;
+  --bg2: #0b1326;
+  --panel: rgba(10, 17, 33, 0.92);
+  --panel-2: rgba(15, 25, 47, 0.95);
+  --line: rgba(142, 180, 255, 0.12);
+  --line-strong: rgba(142, 180, 255, 0.22);
+  --text: #f4f7ff;
+  --muted: #8ea0c4;
+  --accent: #72b0ff;
+  --accent2: #7ef2d0;
+  --good: #56e3b4;
+  --danger: #ff7b86;
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
 }
+
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(125,211,252,0.14), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(167,139,250,0.12), transparent 22%),
+    radial-gradient(circle at top left, rgba(114,176,255,0.14), transparent 22%),
+    radial-gradient(circle at bottom right, rgba(126,242,208,0.08), transparent 20%),
     linear-gradient(180deg, var(--bg2), var(--bg));
 }
 button, input { font: inherit; }
-.shell { width: min(100%, 540px); margin: 0 auto; padding: 14px 12px 40px; }
+.shell {
+  width: min(100%, 560px);
+  margin: 0 auto;
+  padding: 14px 12px 40px;
+}
 .card {
-  background: var(--panel);
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
   border: 1px solid var(--line);
   border-radius: 22px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.28);
-  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
 }
 .topTabs {
   display: grid;
@@ -36,17 +45,18 @@ button, input { font: inherit; }
   margin-bottom: 10px;
 }
 .topTab {
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.03);
   color: var(--text);
   border-radius: 14px;
   padding: 12px;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .topTab.active {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #081018;
-  border-color: transparent;
+  background: linear-gradient(135deg, rgba(114,176,255,0.24), rgba(126,242,208,0.18));
+  border-color: var(--line-strong);
+  color: #f7fbff;
 }
 .dayScroller {
   display: grid;
@@ -62,17 +72,29 @@ button, input { font: inherit; }
 .dayPill {
   scroll-snap-align: start;
   text-align: left;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.03);
   color: var(--text);
   border-radius: 18px;
   padding: 14px;
 }
-.dayPill span { display: block; color: var(--muted); font-size: 0.78rem; margin-bottom: 4px; }
-.dayPill strong { display: block; font-size: 1rem; line-height: 1.2; }
+.dayPill span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.dayPill strong {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
 .dayPill.active {
-  background: linear-gradient(135deg, rgba(125,211,252,0.25), rgba(167,139,250,0.22));
-  border-color: rgba(125,211,252,0.35);
+  background: linear-gradient(135deg, rgba(114,176,255,0.18), rgba(255,255,255,0.04));
+  border-color: var(--line-strong);
 }
 .nowScreen { padding: 16px; }
 .nowHeader {
@@ -82,25 +104,67 @@ button, input { font: inherit; }
   align-items: flex-start;
   margin-bottom: 12px;
 }
-.eyebrow { text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); font-size: 0.68rem; }
-.mutedLabel { color: var(--muted); font-size: 0.78rem; display: block; }
-h1 { font-size: clamp(1.8rem, 9vw, 2.8rem); margin: 8px 0 6px; line-height: 0.95; }
-h2 { margin: 4px 0 0; font-size: 1.15rem; }
-.lede { color: var(--muted); margin: 0; }
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+.mutedLabel {
+  color: var(--muted);
+  font-size: 0.78rem;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+h1 {
+  font-size: clamp(1.95rem, 9vw, 2.95rem);
+  margin: 8px 0 6px;
+  line-height: 0.93;
+  letter-spacing: -0.04em;
+}
+h2 {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+.lede {
+  color: var(--muted);
+  margin: 0;
+  max-width: 34ch;
+}
 .miniProgress {
-  min-width: 84px;
+  min-width: 90px;
   text-align: right;
 }
-.miniProgress span, .timerCard span, .metaRow span { color: var(--muted); display: block; }
-.miniProgress strong { font-size: 1.2rem; }
+.miniProgress span, .timerCard span, .metaRow span {
+  color: var(--muted);
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+}
+.miniProgress strong {
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
 .timerCard {
   padding: 14px;
   border-radius: 18px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line);
   margin-bottom: 12px;
 }
-.bigTimer strong { display: block; font-size: 2.4rem; margin: 8px 0 4px; }
-.timerCard small { display: block; color: var(--muted); }
+.bigTimer strong {
+  display: block;
+  font-size: 2.6rem;
+  margin: 8px 0 4px;
+  letter-spacing: -0.06em;
+}
+.timerCard small {
+  display: block;
+  color: var(--muted);
+}
 .timerActions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -108,8 +172,8 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   margin-top: 12px;
 }
 .timerActions button, .secondaryButton, .notifyButton {
-  border: 1px solid rgba(255,255,255,0.09);
-  background: rgba(255,255,255,0.045);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.04);
   color: var(--text);
   border-radius: 12px;
   padding: 10px 12px;
@@ -120,9 +184,9 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
 }
 .pushDetails {
   margin-top: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.025);
   padding: 10px 12px 12px;
 }
 .pushDetails summary {
@@ -134,7 +198,7 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   min-width: 0;
   margin-top: 12px;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px;
   color: var(--text);
@@ -157,53 +221,16 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
 .currentMeta span, .restBadge {
   border-radius: 999px;
   padding: 8px 10px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
   color: var(--text);
   font-size: 0.82rem;
-}
-.sessionContextCard {
-  display: grid;
-  gap: 12px;
-  margin: 0 0 12px;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(125,211,252,0.08);
-  border: 1px solid rgba(125,211,252,0.16);
-}
-.sessionContextCard strong,
-.sessionContextCard small {
-  display: block;
-}
-.sessionContextCard strong {
-  font-size: 1.1rem;
-  margin: 6px 0 4px;
-}
-.sessionContextCard small {
-  color: var(--muted);
-}
-.sessionTrendPills {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.sessionTrendPill {
-  border-radius: 999px;
-  padding: 8px 10px;
-  background: rgba(52,211,153,0.12);
-  border: 1px solid rgba(52,211,153,0.24);
-  color: #c8f8e8;
-  font-size: 0.78rem;
-}
-.sessionTrendPill.neutral {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.08);
-  color: var(--text);
 }
 .setFocusCard {
   padding: 14px;
   border-radius: 18px;
-  background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--line);
 }
 .setFocusTop {
   display: flex;
@@ -227,15 +254,15 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   width: 100%;
   min-width: 0;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px 12px;
   color: var(--text);
   min-height: 50px;
 }
 .maxRepButton {
-  border: 1px solid rgba(255,255,255,0.09);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.04);
   color: var(--text);
   border-radius: 14px;
   padding: 0 14px;
@@ -250,14 +277,19 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   min-height: 52px;
   font-weight: 800;
   background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #081018;
+  color: #06101a;
 }
 .primaryAction:disabled, .completeButton:disabled {
-  background: rgba(52,211,153,0.18);
-  color: #d7fff1;
+  background: rgba(86,227,180,0.14);
+  color: rgba(244,247,255,0.78);
 }
-.exerciseList, .progressScreen { display: grid; gap: 12px; }
-.exerciseCard, .progressCard, .doneCard { padding: 16px; }
+.exerciseList, .progressScreen {
+  display: grid;
+  gap: 12px;
+}
+.exerciseCard, .progressCard, .doneCard {
+  padding: 16px;
+}
 .exerciseHeader {
   display: flex;
   justify-content: space-between;
@@ -266,9 +298,7 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   margin-bottom: 12px;
 }
 .restBadge {
-  background: rgba(52,211,153,0.1);
-  border: 1px solid rgba(52,211,153,0.2);
-  color: #b8f5df;
+  color: var(--accent2);
 }
 .metaRow {
   display: grid;
@@ -276,12 +306,20 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   gap: 8px;
 }
 .metaRow > div {
-  background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 10px 12px;
 }
-.metaRow strong { display: block; margin-top: 4px; font-size: 1.05rem; }
+.metaRow strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+}
+.progressStats {
+  margin-bottom: 12px;
+}
 .miniChart {
   height: 110px;
   display: grid;
@@ -296,85 +334,23 @@ h2 { margin: 4px 0 0; font-size: 1.15rem; }
   border-radius: 12px 12px 4px 4px;
   background: linear-gradient(180deg, var(--accent2), var(--accent));
 }
-.miniChartBar.peak {
-  box-shadow: 0 0 0 1px rgba(125,211,252,0.28), 0 12px 28px rgba(125,211,252,0.18);
-  filter: saturate(1.15);
-}
-.progressHistory { display: grid; gap: 8px; }
-.historyRow {
+.progressHistory {
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 10px;
+  gap: 8px;
+}
+.historyRow {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.05);
-}
-.historyRow small {
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.62rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line);
 }
 @media (min-width: 721px) {
-  .shell { width: min(760px, calc(100% - 24px)); padding-top: 22px; }
+  .shell {
+    width: min(760px, calc(100% - 24px));
+    padding-top: 22px;
+  }
   .dayScroller { grid-auto-columns: 220px; }
-}
-
-.progressSummaryCard { padding: 16px; }
-.keyLiftGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 14px;
-}
-.keyLiftStat, .progressSectionHeader {
-  background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 16px;
-  padding: 12px 14px;
-}
-.keyLiftStat span, .keyLiftStat small { display: block; color: var(--muted); }
-.keyLiftStat strong { display: block; font-size: 1.35rem; margin: 6px 0 4px; }
-.trendChip {
-  display: inline-flex;
-  align-items: center;
-  margin-top: 10px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(52,211,153,0.12);
-  border: 1px solid rgba(52,211,153,0.24);
-  color: #c8f8e8;
-  font-style: normal;
-  font-size: 0.76rem;
-}
-.trendChip.down {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.08);
-  color: var(--text);
-}
-.progressSectionHeader h2 { margin-top: 6px; }
-.progressCallout {
-  margin-bottom: 12px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(125,211,252,0.08);
-  border: 1px solid rgba(125,211,252,0.15);
-}
-.progressCallout strong,
-.progressCallout span {
-  display: block;
-}
-.progressCallout span {
-  margin-top: 6px;
-  color: var(--muted);
-  line-height: 1.4;
-}
-.keyLiftCard {
-  border-color: rgba(125,211,252,0.22);
-  box-shadow: 0 20px 56px rgba(0,0,0,0.34), inset 0 0 0 1px rgba(125,211,252,0.08);
-}
-@media (max-width: 520px) {
-  .keyLiftGrid { grid-template-columns: 1fr; }
 }
