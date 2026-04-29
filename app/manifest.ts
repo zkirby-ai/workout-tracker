@@ -2,25 +2,17 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Workout Tracker',
+    name: 'Workout',
     short_name: 'Workout',
-    description: 'Mobile-first workout tracker with rest timers, max-weight history, and gym-friendly flow.',
+    description: 'Push/pull workout tracker with rest timers.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#071019',
-    theme_color: '#071019',
+    background_color: '#07090e',
+    theme_color: '#07090e',
     orientation: 'portrait',
     icons: [
-      {
-        src: '/icon-192.png',
-        sizes: '192x192',
-        type: 'image/png'
-      },
-      {
-        src: '/icon-512.png',
-        sizes: '512x512',
-        type: 'image/png'
-      }
+      { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
     ]
   };
 }
