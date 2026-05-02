@@ -141,6 +141,16 @@ function loadWorkoutSessionState() {
   }
 }
 
+function loadStickySubstitutions() {
+  if (typeof window === 'undefined') return {} as Record<string, Exercise>;
+  try {
+    const raw = window.localStorage.getItem('workout-sticky-substitutions');
+    return raw ? (JSON.parse(raw) as Record<string, Exercise>) : {};
+  } catch {
+    return {} as Record<string, Exercise>;
+  }
+}
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -181,7 +191,10 @@ export function WorkoutTracker() {
   const [pushStatus, setPushStatus] = useState('');
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
   const [substitutionPickerOpen, setSubstitutionPickerOpen] = useState(false);
-  const [substitutions, setSubstitutions] = useState<Record<string, Exercise>>(initialSession?.substitutions ?? {});
+  const [substitutions, setSubstitutions] = useState<Record<string, Exercise>>(() => {
+    const sticky = loadStickySubstitutions();
+    return Object.keys(sticky).length ? sticky : (initialSession?.substitutions ?? {});
+  });
   const previousDayIdRef = useRef(dayId);
 
   useEffect(() => {
@@ -190,7 +203,6 @@ export function WorkoutTracker() {
     setSetState(makeInitialState(dayId));
     setTimerState({ endsAt: null, durationSeconds: 0 });
     setActiveLabel(DEFAULT_ACTIVE_LABEL);
-    setSubstitutions({});
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('workout-timer-state');
     }
@@ -322,6 +334,11 @@ export function WorkoutTracker() {
   function persistPushSetup(next: PushSetup) {
     setPushSetup(next);
     window.localStorage.setItem('workout-push-setup', JSON.stringify(next));
+  }
+
+  function persistStickySubstitutions(next: Record<string, Exercise>) {
+    setSubstitutions(next);
+    window.localStorage.setItem('workout-sticky-substitutions', JSON.stringify(next));
   }
 
   function updateField(exId: string, idx: number, field: 'weight' | 'reps', value: string) {
@@ -472,17 +489,15 @@ export function WorkoutTracker() {
         [exercise.id]: Array.from({ length: exercise.sets }, () => ({ weight: '', reps: '', completed: false }))
       };
     });
-    setSubstitutions((cur) => ({ ...cur, [baseExerciseId]: exercise }));
+    persistStickySubstitutions({ ...substitutions, [baseExerciseId]: exercise });
     setSubstitutionPickerOpen(false);
-    setActiveLabel(`Swapped to ${exercise.name}`);
+    setActiveLabel(`Sticky swap: ${exercise.name}`);
   }
 
   function clearSubstitution(baseExerciseId: string) {
-    setSubstitutions((cur) => {
-      const next = { ...cur };
-      delete next[baseExerciseId];
-      return next;
-    });
+    const next = { ...substitutions };
+    delete next[baseExerciseId];
+    persistStickySubstitutions(next);
     setSubstitutionPickerOpen(false);
     setActiveLabel('Back to programmed exercise');
   }
@@ -816,13 +831,14 @@ export function WorkoutTracker() {
           <div className="sheet" role="dialog" aria-label="Swap exercise">
             <span className="grabber" />
             <h2>Swap exercise</h2>
+            <p className="sheetHelp">Pick an alternate movement. Your choice will stick for future workouts until you reset it.</p>
             <div className="daySheet">
               {exerciseSubstitutions[(currentDay.exercises[exerciseIndex] ?? currentDay.exercises[currentDay.exercises.length - 1]).id]?.map((option) => (
                 <button
                   key={option.id}
                   onClick={() => applySubstitution((currentDay.exercises[exerciseIndex] ?? currentDay.exercises[currentDay.exercises.length - 1]).id, option)}
                 >
-                  <span className="index">Alt</span>
+                  <span className="index">Sticky</span>
                   <span>
                     <span className="ms">{option.name}</span>
                     <span className="mf">{option.sets} sets · {option.reps} · rest {formatRest(option.restSeconds)}</span>
@@ -835,7 +851,7 @@ export function WorkoutTracker() {
                   <span className="index">Reset</span>
                   <span>
                     <span className="ms">Back to programmed exercise</span>
-                    <span className="mf">Use the original movement again</span>
+                    <span className="mf">Remove the sticky swap for future workouts</span>
                   </span>
                   <span className="check">{Icon.check}</span>
                 </button>
