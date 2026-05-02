@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { formatRest, workoutDays } from '../lib/workout-data';
+import { exerciseSubstitutions, formatRest, type Exercise, workoutDays } from '../lib/workout-data';
 
 type SetLog = {
   weight: string;
@@ -80,6 +80,7 @@ type WorkoutSessionState = {
   screen: Screen;
   setState: Record<string, SetLog[]>;
   activeLabel: string;
+  substitutions: Record<string, Exercise>;
 };
 
 const DEFAULT_PUSH_SECRET = '3598509926:ZzdnQ1mpJk_hmlzz_Pdbb3j8Ubud4IhP039';
@@ -179,6 +180,8 @@ export function WorkoutTracker() {
   const [pushSetup, setPushSetup] = useState<PushSetup>({ appSecret: '', apiBase: '', endpoint: null, enabled: false });
   const [pushStatus, setPushStatus] = useState('');
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
+  const [substitutionPickerOpen, setSubstitutionPickerOpen] = useState(false);
+  const [substitutions, setSubstitutions] = useState<Record<string, Exercise>>(initialSession?.substitutions ?? {});
   const previousDayIdRef = useRef(dayId);
 
   useEffect(() => {
@@ -187,6 +190,7 @@ export function WorkoutTracker() {
     setSetState(makeInitialState(dayId));
     setTimerState({ endsAt: null, durationSeconds: 0 });
     setActiveLabel(DEFAULT_ACTIVE_LABEL);
+    setSubstitutions({});
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('workout-timer-state');
     }
@@ -231,9 +235,9 @@ export function WorkoutTracker() {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(
       'workout-session-state',
-      JSON.stringify({ dayId, screen, setState, activeLabel } satisfies WorkoutSessionState)
+      JSON.stringify({ dayId, screen, setState, activeLabel, substitutions } satisfies WorkoutSessionState)
     );
-  }, [activeLabel, dayId, screen, setState]);
+  }, [activeLabel, dayId, screen, setState, substitutions]);
 
   const secondsLeft = timerState.endsAt ? Math.max(0, Math.ceil((timerState.endsAt - nowMs) / 1000)) : 0;
 
@@ -251,17 +255,22 @@ export function WorkoutTracker() {
     }
   }, [secondsLeft, timerState.endsAt]);
 
-  const totalCompleted = currentDay.exercises.reduce(
+  const exercisesForDay = useMemo(
+    () => currentDay.exercises.map((exercise) => substitutions[exercise.id] ?? exercise),
+    [currentDay.exercises, substitutions]
+  );
+
+  const totalCompleted = exercisesForDay.reduce(
     (acc, e) => acc + (setState[e.id]?.filter((s) => s.completed).length ?? 0),
     0
   );
-  const totalSets = currentDay.exercises.reduce((acc, e) => acc + e.sets, 0);
+  const totalSets = exercisesForDay.reduce((acc, e) => acc + e.sets, 0);
 
-  const exerciseIndex = currentDay.exercises.findIndex((e) => {
+  const exerciseIndex = exercisesForDay.findIndex((e) => {
     const sets = setState[e.id] ?? [];
     return sets.some((s) => !s.completed);
   });
-  const currentExercise = exerciseIndex >= 0 ? currentDay.exercises[exerciseIndex] : currentDay.exercises[currentDay.exercises.length - 1];
+  const currentExercise = exerciseIndex >= 0 ? exercisesForDay[exerciseIndex] : exercisesForDay[exercisesForDay.length - 1];
   const currentSets = setState[currentExercise.id] ?? [];
   const pendingSetIndex = currentSets.findIndex((s) => !s.completed);
   const currentSetIndex = pendingSetIndex >= 0 ? pendingSetIndex : Math.max(0, currentSets.length - 1);
@@ -362,7 +371,7 @@ export function WorkoutTracker() {
 
     const allDone = next[exId].every((s) => s.completed);
     if (allDone) {
-      const ex = currentDay.exercises.find((x) => x.id === exId);
+      const ex = exercisesForDay.find((x) => x.id === exId);
       const parsed = next[exId].map((s) => ({
         weight: Number.parseFloat(s.weight) || 0,
         reps: Number.parseInt(s.reps, 10) || 0
@@ -455,6 +464,29 @@ export function WorkoutTracker() {
     completeSet(ex.id, currentSetIndex, ex.restSeconds, ex.name);
   }
 
+  function applySubstitution(baseExerciseId: string, exercise: Exercise) {
+    setSetState((cur) => {
+      if (cur[exercise.id]) return cur;
+      return {
+        ...cur,
+        [exercise.id]: Array.from({ length: exercise.sets }, () => ({ weight: '', reps: '', completed: false }))
+      };
+    });
+    setSubstitutions((cur) => ({ ...cur, [baseExerciseId]: exercise }));
+    setSubstitutionPickerOpen(false);
+    setActiveLabel(`Swapped to ${exercise.name}`);
+  }
+
+  function clearSubstitution(baseExerciseId: string) {
+    setSubstitutions((cur) => {
+      const next = { ...cur };
+      delete next[baseExerciseId];
+      return next;
+    });
+    setSubstitutionPickerOpen(false);
+    setActiveLabel('Back to programmed exercise');
+  }
+
   /* ---------- Derived ---------- */
 
   const timerProgress =
@@ -481,6 +513,9 @@ export function WorkoutTracker() {
       );
     }
     const ex = currentExercise;
+    const baseExercise = currentDay.exercises[exerciseIndex] ?? currentDay.exercises[currentDay.exercises.length - 1];
+    const activeSubstitution = substitutions[baseExercise.id] ?? null;
+    const substitutionOptions = exerciseSubstitutions[baseExercise.id] ?? [];
     return (
       <>
         {/* Timer */}
@@ -506,6 +541,12 @@ export function WorkoutTracker() {
               <span className="eyebrow">{exerciseIndex + 1} of {currentDay.exercises.length}</span>
             </div>
             <h2>{ex.name}</h2>
+            <div className="exerciseActionsRow">
+              <button className="swapBtn" onClick={() => setSubstitutionPickerOpen(true)}>
+                Swap exercise
+              </button>
+              {activeSubstitution ? <span className="swapNote">Subbed in</span> : null}
+            </div>
             <div className="metaRow">
               <span className="metaChip"><span className="l">Sets</span>{ex.sets}</span>
               <span className="metaChip"><span className="l">Reps</span>{ex.reps}</span>
@@ -593,7 +634,7 @@ export function WorkoutTracker() {
   function PlanScreen() {
     return (
       <section className="exerciseList">
-        {currentDay.exercises.map((ex) => {
+        {exercisesForDay.map((ex) => {
           const sets = setState[ex.id] ?? [];
           const completed = sets.filter((s) => s.completed).length;
           return (
@@ -768,6 +809,41 @@ export function WorkoutTracker() {
         <button className={`tab ${screen === 'progress' ? 'active' : ''}`} onClick={() => setScreen('progress')}>Progress</button>
         <button className={`tab ${screen === 'settings' ? 'active' : ''}`} onClick={() => setScreen('settings')}>Settings</button>
       </nav>
+
+      {substitutionPickerOpen ? (
+        <>
+          <div className="sheetBackdrop" onClick={() => setSubstitutionPickerOpen(false)} />
+          <div className="sheet" role="dialog" aria-label="Swap exercise">
+            <span className="grabber" />
+            <h2>Swap exercise</h2>
+            <div className="daySheet">
+              {exerciseSubstitutions[(currentDay.exercises[exerciseIndex] ?? currentDay.exercises[currentDay.exercises.length - 1]).id]?.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => applySubstitution((currentDay.exercises[exerciseIndex] ?? currentDay.exercises[currentDay.exercises.length - 1]).id, option)}
+                >
+                  <span className="index">Alt</span>
+                  <span>
+                    <span className="ms">{option.name}</span>
+                    <span className="mf">{option.sets} sets · {option.reps} · rest {formatRest(option.restSeconds)}</span>
+                  </span>
+                  <span className="check">{Icon.chev}</span>
+                </button>
+              )) ?? []}
+              {substitutions[(currentDay.exercises[exerciseIndex] ?? currentDay.exercises[currentDay.exercises.length - 1]).id] ? (
+                <button onClick={() => clearSubstitution((currentDay.exercises[exerciseIndex] ?? currentDay.exercises[currentDay.exercises.length - 1]).id)}>
+                  <span className="index">Reset</span>
+                  <span>
+                    <span className="ms">Back to programmed exercise</span>
+                    <span className="mf">Use the original movement again</span>
+                  </span>
+                  <span className="check">{Icon.check}</span>
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </>
+      ) : null}
 
       {dayPickerOpen ? (
         <>
