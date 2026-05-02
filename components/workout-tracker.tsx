@@ -757,10 +757,10 @@ export function WorkoutTracker() {
         <span className="dpButton">Switch {Icon.chev}</span>
       </button>
 
-      {screen === 'now' && <NowScreen />}
-      {screen === 'plan' && <PlanScreen />}
-      {screen === 'progress' && <ProgressScreen />}
-      {screen === 'settings' && <SettingsScreen />}
+      {screen === 'now' && NowScreen()}
+      {screen === 'plan' && PlanScreen()}
+      {screen === 'progress' && ProgressScreen()}
+      {screen === 'settings' && SettingsScreen()}
 
       <nav className="tabBar" aria-label="Sections">
         <button className={`tab ${screen === 'now' ? 'active' : ''}`} onClick={() => setScreen('now')}>Now</button>
