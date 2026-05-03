@@ -376,6 +376,29 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+.infoBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.infoBtn svg { width: 15px; height: 15px; }
+.infoBtn.small {
+  width: 28px;
+  height: 28px;
+}
+.planExerciseTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .swapNote {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -865,6 +888,34 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-2);
   font-size: 13px;
   line-height: 1.45;
+}
+.guideBlock {
+  display: grid;
+  gap: 14px;
+}
+.guideLabel {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.guideBlock ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+  display: grid;
+  gap: 6px;
+}
+.guideBlock li {
+  color: var(--text-2);
+  line-height: 1.45;
+}
+.guideFeel {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
 }
 @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 @keyframes slideUp { from { transform: translateY(28px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }

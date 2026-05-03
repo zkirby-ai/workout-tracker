@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { exerciseSubstitutions, formatRest, type Exercise, workoutDays } from '../lib/workout-data';
+import { exerciseGuides, exerciseSubstitutions, formatRest, type Exercise, workoutDays } from '../lib/workout-data';
 
 type SetLog = {
   weight: string;
@@ -170,6 +170,13 @@ const Icon = {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="6 9 12 15 18 9" />
     </svg>
+  ),
+  info: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 10v6" />
+      <path d="M12 7h.01" />
+    </svg>
   )
 };
 
@@ -191,6 +198,7 @@ export function WorkoutTracker() {
   const [pushStatus, setPushStatus] = useState('');
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
   const [substitutionPickerOpen, setSubstitutionPickerOpen] = useState(false);
+  const [guideExercise, setGuideExercise] = useState<Exercise | null>(null);
   const [substitutions, setSubstitutions] = useState<Record<string, Exercise>>(() => {
     const sticky = loadStickySubstitutions();
     return Object.keys(sticky).length ? sticky : (initialSession?.substitutions ?? {});
@@ -560,6 +568,9 @@ export function WorkoutTracker() {
               <button className="swapBtn" onClick={() => setSubstitutionPickerOpen(true)}>
                 Swap exercise
               </button>
+              <button className="infoBtn" onClick={() => setGuideExercise(ex)} aria-label={`How to do ${ex.name}`}>
+                {Icon.info}
+              </button>
               {activeSubstitution ? <span className="swapNote">Subbed in</span> : null}
             </div>
             <div className="metaRow">
@@ -660,7 +671,12 @@ export function WorkoutTracker() {
                 </div>
                 <span className="eyebrow">Rest {formatRest(ex.restSeconds)}</span>
               </div>
-              <h3>{ex.name}</h3>
+              <div className="planExerciseTitleRow">
+                <h3>{ex.name}</h3>
+                <button className="infoBtn small" onClick={() => setGuideExercise(ex)} aria-label={`How to do ${ex.name}`}>
+                  {Icon.info}
+                </button>
+              </div>
               <div className="stats">
                 <div className="stat"><div className="l">Sets</div><div className="v">{ex.sets}</div></div>
                 <div className="stat"><div className="l">Reps</div><div className="v">{ex.reps}</div></div>
@@ -824,6 +840,43 @@ export function WorkoutTracker() {
         <button className={`tab ${screen === 'progress' ? 'active' : ''}`} onClick={() => setScreen('progress')}>Progress</button>
         <button className={`tab ${screen === 'settings' ? 'active' : ''}`} onClick={() => setScreen('settings')}>Settings</button>
       </nav>
+
+      {guideExercise ? (
+        <>
+          <div className="sheetBackdrop" onClick={() => setGuideExercise(null)} />
+          <div className="sheet" role="dialog" aria-label={`How to do ${guideExercise.name}`}>
+            <span className="grabber" />
+            <h2>{guideExercise.name}</h2>
+            {exerciseGuides[guideExercise.id] ? (
+              <div className="guideBlock">
+                <div>
+                  <p className="guideLabel">Setup</p>
+                  <ul>
+                    {exerciseGuides[guideExercise.id].setup.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <p className="guideLabel">Cues</p>
+                  <ul>
+                    {exerciseGuides[guideExercise.id].cues.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </div>
+                {exerciseGuides[guideExercise.id].mistakes?.length ? (
+                  <div>
+                    <p className="guideLabel">Avoid</p>
+                    <ul>
+                      {exerciseGuides[guideExercise.id].mistakes?.map((item) => <li key={item}>{item}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
+                {exerciseGuides[guideExercise.id].feel ? <p className="guideFeel">Should feel like: {exerciseGuides[guideExercise.id].feel}</p> : null}
+              </div>
+            ) : (
+              <p className="sheetHelp">No form guide written for this one yet.</p>
+            )}
+          </div>
+        </>
+      ) : null}
 
       {substitutionPickerOpen ? (
         <>

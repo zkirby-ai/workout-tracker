@@ -1,3 +1,10 @@
+export type ExerciseGuide = {
+  setup: string[];
+  cues: string[];
+  mistakes?: string[];
+  feel?: string;
+};
+
 export type Exercise = {
   id: string;
   name: string;
@@ -139,6 +146,111 @@ export const exerciseSubstitutions: Record<string, Exercise[]> = {
     { id: 'rope-hammer-curl', name: 'Rope Hammer Curl', sets: 3, reps: '10-12', restSeconds: 45, severity: 'Light' },
     { id: 'cross-body-hammer-curl', name: 'Cross Body Hammer Curl', sets: 3, reps: '10-12', restSeconds: 45, severity: 'Light' }
   ]
+};
+
+export const exerciseGuides: Record<string, ExerciseGuide> = {
+  'flat-bench': {
+    setup: ['Feet planted hard.', 'Upper back tight on bench.', 'Wrists stacked over forearms.'],
+    cues: ['Lower to lower chest.', 'Press up and slightly back.', 'Keep shoulder blades pinned.'],
+    mistakes: ['Elbows flared too hard.', 'Butt coming off bench.', 'Bouncing the bar.'],
+    feel: 'Chest, front delts, triceps.'
+  },
+  'incline-db': {
+    setup: ['Low incline bench.', 'Feet planted.', 'DBs start over upper chest.'],
+    cues: ['Lower with control.', 'Keep elbows slightly tucked.', 'Press up without smashing DBs together.'],
+    mistakes: ['Bench too upright.', 'Shrugging shoulders forward.'],
+    feel: 'Upper chest, front delts, triceps.'
+  },
+  'lateral-raise': {
+    setup: ['Soft elbows.', 'Slight torso lean.', 'DBs start by sides.'],
+    cues: ['Lead with elbows.', 'Raise to shoulder height.', 'Control the lowering.'],
+    mistakes: ['Swinging from hips.', 'Turning it into a shrug.'],
+    feel: 'Side delts.'
+  },
+  'rope-pushdown': {
+    setup: ['Elbows pinned by sides.', 'Chest tall.', 'Small forward lean okay.'],
+    cues: ['Drive rope down.', 'Spread rope at bottom.', 'Keep upper arm still.'],
+    mistakes: ['Elbows drifting forward.', 'Using bodyweight to slam reps.'],
+    feel: 'Triceps.'
+  },
+  'weighted-pullup': {
+    setup: ['Start from dead hang.', 'Brace abs and glutes.', 'Hands just outside shoulder width.'],
+    cues: ['Pull elbows to ribs.', 'Chest up toward bar.', 'Lower under control.'],
+    mistakes: ['Half reps.', 'Kipping.', 'Neck craning for the bar.'],
+    feel: 'Lats, upper back, biceps.'
+  },
+  'chest-row': {
+    setup: ['Chest glued to pad.', 'Neutral spine.', 'Arms fully extended at bottom.'],
+    cues: ['Pull elbows back.', 'Pause the squeeze.', 'Lower without losing chest contact.'],
+    mistakes: ['Shrugging.', 'Neck jutting forward.', 'Short ROM.'],
+    feel: 'Mid back, lats, rear delts.'
+  },
+  'lat-pulldown': {
+    setup: ['Lock knees in.', 'Slight lean back.', 'Chest up.'],
+    cues: ['Pull bar to upper chest.', 'Drive elbows down.', 'Let lats stretch at top.'],
+    mistakes: ['Turning it into a row.', 'Yanking with momentum.'],
+    feel: 'Lats and upper back.'
+  },
+  'ez-curl': {
+    setup: ['Elbows tucked.', 'Chest tall.', 'Grip where wrists feel natural.'],
+    cues: ['Curl without swinging.', 'Squeeze at top.', 'Lower slow.'],
+    mistakes: ['Leaning back.', 'Elbows drifting forward every rep.'],
+    feel: 'Biceps.'
+  },
+  'smith-incline': {
+    setup: ['Bench low incline.', 'Eyes under bar path.', 'Upper back tight.'],
+    cues: ['Lower to upper chest.', 'Press smoothly.', 'Keep shoulders down and back.'],
+    mistakes: ['Bench too steep.', 'Bouncing off chest.'],
+    feel: 'Upper chest, front delts, triceps.'
+  },
+  'shoulder-press': {
+    setup: ['Seat upright but not vertical.', 'Feet planted.', 'DBs at ear level.'],
+    cues: ['Press up and slightly in.', 'Keep ribs down.', 'Lower to a stable bottom.'],
+    mistakes: ['Overarching low back.', 'Starting too low and losing tension.'],
+    feel: 'Front/side delts, triceps.'
+  },
+  'cable-fly': {
+    setup: ['Split stance.', 'Slight bend in elbows.', 'Chest up.'],
+    cues: ['Bring hands together in an arc.', 'Squeeze chest in front.', 'Return with control.'],
+    mistakes: ['Turning it into a press.', 'Shoulders rolling forward hard.'],
+    feel: 'Chest.'
+  },
+  'overhead-ext': {
+    setup: ['Elbows high and close.', 'Brace abs.', 'Stagger stance if needed.'],
+    cues: ['Stretch behind head.', 'Extend without flaring elbows.', 'Control return.'],
+    mistakes: ['Elbows splaying wide.', 'Using torso swing.'],
+    feel: 'Long head of triceps.'
+  },
+  tbar: {
+    setup: ['Hips back.', 'Soft knees.', 'Neutral spine.'],
+    cues: ['Lock torso angle.', 'Pull elbows back toward lower chest/upper stomach.', 'Pause then lower slow.'],
+    mistakes: ['Standing up every rep.', 'Jerking with hips.', 'Shrugging hard at top.'],
+    feel: 'Mid back, lats, rear delts.'
+  },
+  'single-arm-row': {
+    setup: ['Square hips/torso.', 'Chest tall.', 'Reach fully at start.'],
+    cues: ['Drive elbow back.', 'Pause the squeeze.', 'Control the stretch.'],
+    mistakes: ['Twisting body to finish reps.', 'Yanking with biceps.'],
+    feel: 'Lats and mid back.'
+  },
+  pullover: {
+    setup: ['Soft elbows.', 'Chest slightly lifted.', 'Hinge just enough for line of pull.'],
+    cues: ['Sweep bar down with straight-ish arms.', 'Think armpits to hips.', 'Control the stretch up top.'],
+    mistakes: ['Bending elbows into a pressdown.', 'Using torso swing.'],
+    feel: 'Lats.'
+  },
+  'hammer-curl': {
+    setup: ['Neutral grip.', 'Elbows tucked.', 'Chest tall.'],
+    cues: ['Curl without swinging.', 'Keep palms facing in.', 'Lower slow.'],
+    mistakes: ['Leaning back.', 'Turning it into a cheat curl.'],
+    feel: 'Brachialis, biceps, forearms.'
+  },
+  'barbell-row': {
+    setup: ['Hip hinge first.', 'Brace hard.', 'Bar hangs under shoulders.'],
+    cues: ['Keep torso mostly fixed.', 'Row to lower ribs/upper stomach.', 'Control the negative.'],
+    mistakes: ['Standing up each rep.', 'Too much body English.', 'Rounding low back.'],
+    feel: 'Mid back, lats, posterior chain support.'
+  }
 };
 
 export function formatRest(seconds: number) {
