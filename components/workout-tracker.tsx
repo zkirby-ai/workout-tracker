@@ -81,6 +81,7 @@ type WorkoutSessionState = {
   setState: Record<string, SetLog[]>;
   activeLabel: string;
   substitutions: Record<string, Exercise>;
+  sessionStartedAt: string | null;
 };
 
 const DEFAULT_PUSH_SECRET = '3598509926:ZzdnQ1mpJk_hmlzz_Pdbb3j8Ubud4IhP039';
@@ -192,6 +193,7 @@ export function WorkoutTracker() {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeLabel, setActiveLabel] = useState(initialSession?.activeLabel ?? DEFAULT_ACTIVE_LABEL);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(initialSession?.sessionStartedAt ?? new Date().toISOString());
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
   const [notificationHint, setNotificationHint] = useState('');
   const [pushSetup, setPushSetup] = useState<PushSetup>({ appSecret: '', apiBase: '', endpoint: null, enabled: false });
@@ -211,6 +213,7 @@ export function WorkoutTracker() {
     setSetState(makeInitialState(dayId));
     setTimerState({ endsAt: null, durationSeconds: 0 });
     setActiveLabel(DEFAULT_ACTIVE_LABEL);
+    setSessionStartedAt(new Date().toISOString());
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('workout-timer-state');
     }
@@ -255,9 +258,9 @@ export function WorkoutTracker() {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(
       'workout-session-state',
-      JSON.stringify({ dayId, screen, setState, activeLabel, substitutions } satisfies WorkoutSessionState)
+      JSON.stringify({ dayId, screen, setState, activeLabel, substitutions, sessionStartedAt } satisfies WorkoutSessionState)
     );
-  }, [activeLabel, dayId, screen, setState, substitutions]);
+  }, [activeLabel, dayId, screen, setState, substitutions, sessionStartedAt]);
 
   const secondsLeft = timerState.endsAt ? Math.max(0, Math.ceil((timerState.endsAt - nowMs) / 1000)) : 0;
 
@@ -324,6 +327,63 @@ export function WorkoutTracker() {
 
   const keyLiftProgress = sortedProgressEntries.filter(([id]) => KEY_LIFTS.includes(id));
   const secondaryProgress = sortedProgressEntries.filter(([id]) => !KEY_LIFTS.includes(id));
+
+  const workoutSummary = useMemo(() => {
+    const durationMinutes = sessionStartedAt
+      ? Math.max(1, Math.round((Date.now() - new Date(sessionStartedAt).getTime()) / 60000))
+      : null;
+
+    const completedExercises = exercisesForDay.filter((exercise) => (setState[exercise.id] ?? []).every((s) => s.completed));
+    const totalVolume = completedExercises.reduce((sum, exercise) => {
+      const sets = setState[exercise.id] ?? [];
+      return sum + sets.reduce((acc, set) => {
+        const weight = Number.parseFloat(set.weight) || 0;
+        const reps = Number.parseInt(set.reps, 10) || 0;
+        return acc + weight * reps;
+      }, 0);
+    }, 0);
+
+    const improvements = completedExercises.flatMap((exercise) => {
+      const sets = setState[exercise.id] ?? [];
+      const parsed = sets.map((set) => ({
+        weight: Number.parseFloat(set.weight) || 0,
+        reps: Number.parseInt(set.reps, 10) || 0
+      }));
+      const topWeight = Math.max(0, ...parsed.map((set) => set.weight));
+      const topSet = parsed.reduce((best, set) => (set.weight > best.weight ? set : best), { weight: 0, reps: 0 });
+      const priorEntries = (progressByExercise.get(exercise.id) ?? []).slice(0, -1);
+      const lastEntry = priorEntries[priorEntries.length - 1] ?? null;
+      const previousBestWeight = priorEntries.length ? Math.max(...priorEntries.map((entry) => entry.maxWeight)) : 0;
+      const weightPr = topWeight > 0 && topWeight > previousBestWeight;
+      const repPr = !!lastEntry && topSet.weight === lastEntry.maxWeight && (topSet.reps || 0) > (lastEntry.topSetReps || 0);
+      const deltaWeight = lastEntry ? topWeight - lastEntry.maxWeight : null;
+      const deltaReps = lastEntry && topSet.weight === lastEntry.maxWeight ? (topSet.reps || 0) - (lastEntry.topSetReps || 0) : null;
+      return [{
+        exerciseId: exercise.id,
+        exerciseName: exercise.name,
+        topWeight,
+        topReps: topSet.reps,
+        weightPr,
+        repPr,
+        deltaWeight,
+        deltaReps
+      }];
+    });
+
+    const prs = improvements.filter((item) => item.weightPr || item.repPr);
+    const bestImprovements = improvements
+      .filter((item) => (item.deltaWeight ?? 0) > 0 || (item.deltaReps ?? 0) > 0)
+      .sort((a, b) => ((b.deltaWeight ?? 0) * 100 + (b.deltaReps ?? 0)) - ((a.deltaWeight ?? 0) * 100 + (a.deltaReps ?? 0)))
+      .slice(0, 3);
+
+    return {
+      durationMinutes,
+      completedExercises: completedExercises.length,
+      totalVolume,
+      prs,
+      bestImprovements
+    };
+  }, [exercisesForDay, progressByExercise, sessionStartedAt, setState]);
 
   function persistHistory(next: HistoryEntry[]) {
     setHistory(next);
@@ -528,10 +588,49 @@ export function WorkoutTracker() {
   function NowScreen() {
     if (dayDone) {
       return (
-        <section className="doneCard">
+        <section className="doneCard summaryCard">
           <span className="eyebrow">Done</span>
           <h2>Workout complete</h2>
-          <p>You finished {currentDay.theme}. Tap Progress to see how today moved your numbers.</p>
+          <div className="summaryStats">
+            <div className="summaryStat"><span>Duration</span><strong>{workoutSummary.durationMinutes ?? '—'} min</strong></div>
+            <div className="summaryStat"><span>Sets</span><strong>{totalCompleted}</strong></div>
+            <div className="summaryStat"><span>Exercises</span><strong>{workoutSummary.completedExercises}</strong></div>
+            <div className="summaryStat"><span>Volume</span><strong>{workoutSummary.totalVolume > 0 ? `${workoutSummary.totalVolume.toLocaleString()} lb` : '—'}</strong></div>
+          </div>
+          {workoutSummary.prs.length > 0 ? (
+            <div className="summarySection">
+              <p className="guideLabel">PRs today</p>
+              <div className="summaryList">
+                {workoutSummary.prs.map((item) => (
+                  <div className="summaryRow" key={`${item.exerciseId}-pr`}>
+                    <strong>{item.exerciseName}</strong>
+                    <span>
+                      {item.weightPr ? `New weight PR: ${item.topWeight} lb` : ''}
+                      {item.weightPr && item.repPr ? ' · ' : ''}
+                      {item.repPr ? `Rep PR: ${item.topWeight} lb × ${item.topReps}` : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {workoutSummary.bestImprovements.length > 0 ? (
+            <div className="summarySection">
+              <p className="guideLabel">Best improvements vs last session</p>
+              <div className="summaryList">
+                {workoutSummary.bestImprovements.map((item) => (
+                  <div className="summaryRow" key={`${item.exerciseId}-improvement`}>
+                    <strong>{item.exerciseName}</strong>
+                    <span>
+                      {(item.deltaWeight ?? 0) > 0 ? `+${item.deltaWeight} lb` : ''}
+                      {(item.deltaWeight ?? 0) > 0 && (item.deltaReps ?? 0) > 0 ? ' · ' : ''}
+                      {(item.deltaReps ?? 0) > 0 ? `+${item.deltaReps} reps at ${item.topWeight} lb` : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
       );
     }
