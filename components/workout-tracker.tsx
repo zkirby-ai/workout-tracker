@@ -272,14 +272,15 @@ export function WorkoutTracker() {
       setTimerState({ endsAt: null, durationSeconds: 0 });
       window.localStorage.removeItem('workout-timer-state');
       setActiveLabel('Rest complete');
-      if (typeof window !== 'undefined') {
+      const shouldNotifyLocally = !pushSetup.enabled;
+      if (typeof window !== 'undefined' && shouldNotifyLocally) {
         if ('vibrate' in navigator) navigator.vibrate?.([200, 120, 200]);
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification('Rest complete', { body: 'Time for your next set.', silent: false });
         }
       }
     }
-  }, [secondsLeft, timerState.endsAt]);
+  }, [pushSetup.enabled, secondsLeft, timerState.endsAt]);
 
   const exercisesForDay = useMemo(
     () => currentDay.exercises.map((exercise) => substitutions[exercise.id] ?? exercise),
