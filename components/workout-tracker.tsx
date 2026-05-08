@@ -82,6 +82,7 @@ type WorkoutSessionState = {
   activeLabel: string;
   substitutions: Record<string, Exercise>;
   sessionStartedAt: string | null;
+  sessionCompletedAt: string | null;
 };
 
 const DEFAULT_PUSH_SECRET = '3598509926:ZzdnQ1mpJk_hmlzz_Pdbb3j8Ubud4IhP039';
@@ -194,6 +195,7 @@ export function WorkoutTracker() {
   const [activeLabel, setActiveLabel] = useState(initialSession?.activeLabel ?? DEFAULT_ACTIVE_LABEL);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(initialSession?.sessionStartedAt ?? new Date().toISOString());
+  const [sessionCompletedAt, setSessionCompletedAt] = useState<string | null>(initialSession?.sessionCompletedAt ?? null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
   const [notificationHint, setNotificationHint] = useState('');
   const [pushSetup, setPushSetup] = useState<PushSetup>({ appSecret: '', apiBase: '', endpoint: null, enabled: false });
@@ -214,6 +216,7 @@ export function WorkoutTracker() {
     setTimerState({ endsAt: null, durationSeconds: 0 });
     setActiveLabel(DEFAULT_ACTIVE_LABEL);
     setSessionStartedAt(new Date().toISOString());
+    setSessionCompletedAt(null);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('workout-timer-state');
     }
@@ -258,9 +261,9 @@ export function WorkoutTracker() {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(
       'workout-session-state',
-      JSON.stringify({ dayId, screen, setState, activeLabel, substitutions, sessionStartedAt } satisfies WorkoutSessionState)
+      JSON.stringify({ dayId, screen, setState, activeLabel, substitutions, sessionStartedAt, sessionCompletedAt } satisfies WorkoutSessionState)
     );
-  }, [activeLabel, dayId, screen, setState, substitutions, sessionStartedAt]);
+  }, [activeLabel, dayId, screen, setState, substitutions, sessionStartedAt, sessionCompletedAt]);
 
   const secondsLeft = timerState.endsAt ? Math.max(0, Math.ceil((timerState.endsAt - nowMs) / 1000)) : 0;
 
@@ -328,9 +331,16 @@ export function WorkoutTracker() {
   const keyLiftProgress = sortedProgressEntries.filter(([id]) => KEY_LIFTS.includes(id));
   const secondaryProgress = sortedProgressEntries.filter(([id]) => !KEY_LIFTS.includes(id));
 
+  useEffect(() => {
+    if (dayDone && !sessionCompletedAt) {
+      setSessionCompletedAt(new Date().toISOString());
+    }
+  }, [dayDone, sessionCompletedAt]);
+
   const workoutSummary = useMemo(() => {
+    const durationEnd = sessionCompletedAt ? new Date(sessionCompletedAt).getTime() : Date.now();
     const durationMinutes = sessionStartedAt
-      ? Math.max(1, Math.round((Date.now() - new Date(sessionStartedAt).getTime()) / 60000))
+      ? Math.max(1, Math.round((durationEnd - new Date(sessionStartedAt).getTime()) / 60000))
       : null;
 
     const completedExercises = exercisesForDay.filter((exercise) => (setState[exercise.id] ?? []).every((s) => s.completed));
@@ -383,7 +393,7 @@ export function WorkoutTracker() {
       prs,
       bestImprovements
     };
-  }, [exercisesForDay, progressByExercise, sessionStartedAt, setState]);
+  }, [exercisesForDay, progressByExercise, sessionCompletedAt, sessionStartedAt, setState]);
 
   function persistHistory(next: HistoryEntry[]) {
     setHistory(next);
