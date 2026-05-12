@@ -102,6 +102,22 @@ function makeInitialState(dayId: string, substitutions: Record<string, Exercise>
   ) as Record<string, SetLog[]>;
 }
 
+function normalizeSetState(
+  dayId: string,
+  substitutions: Record<string, Exercise>,
+  existing?: Record<string, SetLog[]>
+) {
+  const day = workoutDays.find((x) => x.id === dayId) ?? workoutDays[0];
+  const exercises = day.exercises.map((exercise) => substitutions[exercise.id] ?? exercise);
+  return Object.fromEntries(
+    exercises.map((exercise) => {
+      const prior = existing?.[exercise.id] ?? [];
+      const next = Array.from({ length: exercise.sets }, (_, idx) => prior[idx] ?? { weight: '', reps: '', completed: false });
+      return [exercise.id, next];
+    })
+  ) as Record<string, SetLog[]>;
+}
+
 function loadHistory(): HistoryEntry[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -204,7 +220,9 @@ export function WorkoutTracker() {
   const [dayId, setDayId] = useState(initialSession?.dayId ?? workoutDays[0].id);
   const currentDay = useMemo(() => workoutDays.find((d) => d.id === dayId) ?? workoutDays[0], [dayId]);
   const [setState, setSetState] = useState<Record<string, SetLog[]>>(
-    () => initialSession?.setState ?? makeInitialState(initialSession?.dayId ?? workoutDays[0].id, loadStickySubstitutions())
+    () => initialSession?.setState
+      ? normalizeSetState(initialSession.dayId, loadStickySubstitutions(), initialSession.setState)
+      : makeInitialState(initialSession?.dayId ?? workoutDays[0].id, loadStickySubstitutions())
   );
   const [timerState, setTimerState] = useState<TimerState>({ endsAt: null, durationSeconds: 0 });
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -329,6 +347,13 @@ export function WorkoutTracker() {
     () => currentDay.exercises.map((exercise) => substitutions[exercise.id] ?? exercise),
     [currentDay.exercises, substitutions]
   );
+
+  useEffect(() => {
+    setSetState((current) => {
+      const normalized = normalizeSetState(dayId, substitutions, current);
+      return JSON.stringify(normalized) === JSON.stringify(current) ? current : normalized;
+    });
+  }, [dayId, substitutions]);
 
   const totalCompleted = exercisesForDay.reduce(
     (acc, e) => acc + (setState[e.id]?.filter((s) => s.completed).length ?? 0),
