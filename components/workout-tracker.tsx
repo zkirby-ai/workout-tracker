@@ -83,6 +83,7 @@ type WorkoutSessionState = {
   substitutions: Record<string, Exercise>;
   sessionStartedAt: string | null;
   sessionCompletedAt: string | null;
+  sessionDate: string;
 };
 
 const DEFAULT_PUSH_SECRET = '3598509926:ZzdnQ1mpJk_hmlzz_Pdbb3j8Ubud4IhP039';
@@ -137,7 +138,14 @@ function loadWorkoutSessionState() {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem('workout-session-state');
-    return raw ? (JSON.parse(raw) as WorkoutSessionState) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<WorkoutSessionState>;
+    const today = localDateKey();
+    if (!parsed.sessionDate || parsed.sessionDate !== today || parsed.sessionCompletedAt) {
+      window.localStorage.removeItem('workout-session-state');
+      return null;
+    }
+    return parsed as WorkoutSessionState;
   } catch {
     return null;
   }
@@ -151,6 +159,13 @@ function loadStickySubstitutions() {
   } catch {
     return {} as Record<string, Exercise>;
   }
+}
+
+function localDateKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -261,7 +276,7 @@ export function WorkoutTracker() {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(
       'workout-session-state',
-      JSON.stringify({ dayId, screen, setState, activeLabel, substitutions, sessionStartedAt, sessionCompletedAt } satisfies WorkoutSessionState)
+      JSON.stringify({ dayId, screen, setState, activeLabel, substitutions, sessionStartedAt, sessionCompletedAt, sessionDate: localDateKey() } satisfies WorkoutSessionState)
     );
   }, [activeLabel, dayId, screen, setState, substitutions, sessionStartedAt, sessionCompletedAt]);
 
