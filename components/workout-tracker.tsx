@@ -237,6 +237,32 @@ export function WorkoutTracker() {
     }
   }, [dayId]);
 
+  function resetCurrentSession(nextDayId: string) {
+    previousDayIdRef.current = nextDayId;
+    setDayId(nextDayId);
+    setSetState(makeInitialState(nextDayId));
+    setTimerState({ endsAt: null, durationSeconds: 0 });
+    setActiveLabel(DEFAULT_ACTIVE_LABEL);
+    setSessionStartedAt(new Date().toISOString());
+    setSessionCompletedAt(null);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('workout-timer-state');
+      window.localStorage.setItem(
+        'workout-session-state',
+        JSON.stringify({
+          dayId: nextDayId,
+          screen,
+          setState: makeInitialState(nextDayId),
+          activeLabel: DEFAULT_ACTIVE_LABEL,
+          substitutions,
+          sessionStartedAt: new Date().toISOString(),
+          sessionCompletedAt: null,
+          sessionDate: localDateKey()
+        } satisfies WorkoutSessionState)
+      );
+    }
+  }
+
   useEffect(() => {
     setHistory(loadHistory());
     setTimerState(loadTimerState());
@@ -1050,7 +1076,7 @@ export function WorkoutTracker() {
                 <button
                   key={d.id}
                   className={d.id === dayId ? 'active' : ''}
-                  onClick={() => { setDayId(d.id); setDayPickerOpen(false); }}
+                  onClick={() => { resetCurrentSession(d.id); setDayPickerOpen(false); }}
                 >
                   <span className="index">{d.name.replace('Day ', 'D')}</span>
                   <span>
