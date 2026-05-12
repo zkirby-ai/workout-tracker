@@ -91,10 +91,11 @@ const DEFAULT_PUSH_API_BASE = 'https://push.zkirby.com';
 const DEFAULT_ACTIVE_LABEL = 'Starts after each set';
 const KEY_LIFTS = ['flat-bench', 'weighted-pullup', 'tbar', 'smith-incline', 'shoulder-press'];
 
-function makeInitialState(dayId: string) {
+function makeInitialState(dayId: string, substitutions: Record<string, Exercise> = {}) {
   const day = workoutDays.find((x) => x.id === dayId) ?? workoutDays[0];
+  const exercises = day.exercises.map((exercise) => substitutions[exercise.id] ?? exercise);
   return Object.fromEntries(
-    day.exercises.map((e) => [
+    exercises.map((e) => [
       e.id,
       Array.from({ length: e.sets }, () => ({ weight: '', reps: '', completed: false }))
     ])
@@ -203,7 +204,7 @@ export function WorkoutTracker() {
   const [dayId, setDayId] = useState(initialSession?.dayId ?? workoutDays[0].id);
   const currentDay = useMemo(() => workoutDays.find((d) => d.id === dayId) ?? workoutDays[0], [dayId]);
   const [setState, setSetState] = useState<Record<string, SetLog[]>>(
-    () => initialSession?.setState ?? makeInitialState(initialSession?.dayId ?? workoutDays[0].id)
+    () => initialSession?.setState ?? makeInitialState(initialSession?.dayId ?? workoutDays[0].id, loadStickySubstitutions())
   );
   const [timerState, setTimerState] = useState<TimerState>({ endsAt: null, durationSeconds: 0 });
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -227,7 +228,7 @@ export function WorkoutTracker() {
   useEffect(() => {
     if (previousDayIdRef.current === dayId) return;
     previousDayIdRef.current = dayId;
-    setSetState(makeInitialState(dayId));
+    setSetState(makeInitialState(dayId, substitutions));
     setTimerState({ endsAt: null, durationSeconds: 0 });
     setActiveLabel(DEFAULT_ACTIVE_LABEL);
     setSessionStartedAt(new Date().toISOString());
@@ -240,7 +241,8 @@ export function WorkoutTracker() {
   function resetCurrentSession(nextDayId: string) {
     previousDayIdRef.current = nextDayId;
     setDayId(nextDayId);
-    setSetState(makeInitialState(nextDayId));
+    const nextState = makeInitialState(nextDayId, substitutions);
+    setSetState(nextState);
     setTimerState({ endsAt: null, durationSeconds: 0 });
     setActiveLabel(DEFAULT_ACTIVE_LABEL);
     setSessionStartedAt(new Date().toISOString());
@@ -252,7 +254,7 @@ export function WorkoutTracker() {
         JSON.stringify({
           dayId: nextDayId,
           screen,
-          setState: makeInitialState(nextDayId),
+          setState: nextState,
           activeLabel: DEFAULT_ACTIVE_LABEL,
           substitutions,
           sessionStartedAt: new Date().toISOString(),
