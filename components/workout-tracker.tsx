@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { exerciseGuides, exerciseSubstitutions, formatRest, type Exercise, workoutDays } from '../lib/workout-data';
+import { exerciseSubstitutions, formatRest, getExerciseGuide, type Exercise, workoutDays } from '../lib/workout-data';
 
 type SetLog = {
   weight: string;
@@ -1025,29 +1025,29 @@ export function WorkoutTracker() {
           <div className="sheet" role="dialog" aria-label={`How to do ${guideExercise.name}`}>
             <span className="grabber" />
             <h2>{guideExercise.name}</h2>
-            {exerciseGuides[guideExercise.id] ? (
+            {getExerciseGuide(guideExercise.id) ? (
               <div className="guideBlock">
                 <div>
                   <p className="guideLabel">Setup</p>
                   <ul>
-                    {exerciseGuides[guideExercise.id].setup.map((item) => <li key={item}>{item}</li>)}
+                    {getExerciseGuide(guideExercise.id)?.setup.map((item) => <li key={item}>{item}</li>)}
                   </ul>
                 </div>
                 <div>
                   <p className="guideLabel">Cues</p>
                   <ul>
-                    {exerciseGuides[guideExercise.id].cues.map((item) => <li key={item}>{item}</li>)}
+                    {getExerciseGuide(guideExercise.id)?.cues.map((item) => <li key={item}>{item}</li>)}
                   </ul>
                 </div>
-                {exerciseGuides[guideExercise.id].mistakes?.length ? (
+                {getExerciseGuide(guideExercise.id)?.mistakes?.length ? (
                   <div>
                     <p className="guideLabel">Avoid</p>
                     <ul>
-                      {exerciseGuides[guideExercise.id].mistakes?.map((item) => <li key={item}>{item}</li>)}
+                      {getExerciseGuide(guideExercise.id)?.mistakes?.map((item) => <li key={item}>{item}</li>)}
                     </ul>
                   </div>
                 ) : null}
-                {exerciseGuides[guideExercise.id].feel ? <p className="guideFeel">Should feel like: {exerciseGuides[guideExercise.id].feel}</p> : null}
+                {getExerciseGuide(guideExercise.id)?.feel ? <p className="guideFeel">Should feel like: {getExerciseGuide(guideExercise.id)?.feel}</p> : null}
               </div>
             ) : (
               <p className="sheetHelp">No form guide written for this one yet.</p>

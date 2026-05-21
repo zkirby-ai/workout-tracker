@@ -250,8 +250,126 @@ export const exerciseGuides: Record<string, ExerciseGuide> = {
     cues: ['Keep torso mostly fixed.', 'Row to lower ribs/upper stomach.', 'Control the negative.'],
     mistakes: ['Standing up each rep.', 'Too much body English.', 'Rounding low back.'],
     feel: 'Mid back, lats, posterior chain support.'
+  },
+  'machine-chest-press': {
+    setup: ['Seat height so handles line up around mid chest.', 'Shoulders down and back.', 'Feet planted.'],
+    cues: ['Lower with control.', 'Press through chest without shrugging.', 'Keep forearms stacked under handles.'],
+    mistakes: ['Seat set too high or low.', 'Bouncing out of the bottom.'],
+    feel: 'Chest, front delts, triceps.'
+  },
+  'assisted-pullup': {
+    setup: ['Knee or foot stable on pad.', 'Start from a real hang.', 'Brace your torso.'],
+    cues: ['Pull elbows to ribs.', 'Chest up toward bar.', 'Use the assistance to stay smooth, not sloppy.'],
+    mistakes: ['Half reps.', 'Kipping off the pad.', 'Letting the machine throw you upward.'],
+    feel: 'Lats, upper back, biceps.'
+  },
+  'machine-row': {
+    setup: ['Chest planted or torso braced to the pad.', 'Neutral spine.', 'Reach fully at the start.'],
+    cues: ['Drive elbows back.', 'Pause the squeeze.', 'Control the stretch forward.'],
+    mistakes: ['Shrugging the top.', 'Short ROM.', 'Letting chest come off the support.'],
+    feel: 'Mid back and lats.'
+  },
+  'incline-machine': {
+    setup: ['Seat height so handles track with upper chest.', 'Feet planted.', 'Shoulders tucked down and back.'],
+    cues: ['Lower with control.', 'Press smoothly.', 'Keep tension in upper chest.'],
+    mistakes: ['Seat too low and pressing toward face.', 'Shoulders rolling forward.'],
+    feel: 'Upper chest, front delts, triceps.'
+  },
+  'machine-lateral-raise': {
+    setup: ['Set pads to sit comfortably on forearms or elbows.', 'Chest tall.', 'Shoulders relaxed.'],
+    cues: ['Lead out to the sides.', 'Stop around shoulder height.', 'Lower under control.'],
+    mistakes: ['Shrugging.', 'Slamming the stack.'],
+    feel: 'Side delts.'
+  },
+  'dip-machine': {
+    setup: ['Chest slightly forward.', 'Shoulders packed down.', 'Hands set at a comfortable width.'],
+    cues: ['Drive down through palms.', 'Keep elbows tracking naturally.', 'Control the stretch.'],
+    mistakes: ['Shoulders rolling forward hard.', 'Bouncing the bottom.'],
+    feel: 'Triceps with chest/front delt involvement.'
+  },
+  'incline-machine-alt': {
+    setup: ['Seat height so handles track with upper chest.', 'Feet planted.', 'Shoulders tucked down and back.'],
+    cues: ['Lower with control.', 'Press smoothly.', 'Keep tension in upper chest.'],
+    mistakes: ['Seat too low and pressing toward face.', 'Shoulders rolling forward.'],
+    feel: 'Upper chest, front delts, triceps.'
+  },
+  'machine-shoulder-press': {
+    setup: ['Seat height so handles start around ear level.', 'Feet planted.', 'Brace with ribs down.'],
+    cues: ['Press up and slightly in.', 'Keep forearms vertical.', 'Lower to a stable bottom.'],
+    mistakes: ['Overarching low back.', 'Shrugging into the press.'],
+    feel: 'Front/side delts, triceps.'
+  },
+  'pec-deck': {
+    setup: ['Seat height so upper arms are roughly shoulder height.', 'Chest up.', 'Soft elbow bend.'],
+    cues: ['Bring arms together in a hug arc.', 'Squeeze chest in front.', 'Control the stretch back.'],
+    mistakes: ['Overreaching and losing shoulder position.', 'Turning it into a shoulder movement.'],
+    feel: 'Chest.'
+  },
+  'machine-tbar': {
+    setup: ['Chest supported if the machine has a pad.', 'Neutral spine.', 'Reach long at the bottom.'],
+    cues: ['Pull elbows back.', 'Pause the squeeze.', 'Control the lowering.'],
+    mistakes: ['Short ROM.', 'Shrugging hard at the top.'],
+    feel: 'Mid back, lats, rear delts.'
+  },
+  'machine-single-arm-row': {
+    setup: ['Brace torso against pad or support.', 'Square hips.', 'Reach fully to start.'],
+    cues: ['Drive elbow back.', 'Pause the squeeze.', 'Control the forward stretch.'],
+    mistakes: ['Twisting to finish reps.', 'Shrugging the shoulder up.'],
+    feel: 'Lats and mid back.'
+  },
+  'machine-pullover': {
+    setup: ['Seat so pivot matches shoulders.', 'Chest tall.', 'Arms set comfortably on pads or handles.'],
+    cues: ['Drive through the lat arc.', 'Keep torso mostly still.', 'Control the stretch back.'],
+    mistakes: ['Turning it into a crunch.', 'Letting shoulders roll forward hard.'],
+    feel: 'Lats.'
   }
 };
+
+export const exerciseGuideAliases: Record<string, string> = {
+  'flat-db-bench': 'flat-bench',
+  'smith-flat-bench': 'flat-bench',
+  'machine-chest-press': 'machine-chest-press',
+  'smith-incline-alt': 'smith-incline',
+  'incline-machine': 'incline-machine',
+  'low-incline-barbell': 'smith-incline',
+  'cable-lateral-raise': 'lateral-raise',
+  'machine-lateral-raise': 'machine-lateral-raise',
+  'straight-bar-pushdown': 'rope-pushdown',
+  'single-arm-pushdown': 'rope-pushdown',
+  'dip-machine': 'dip-machine',
+  'assisted-pullup': 'assisted-pullup',
+  'heavy-lat-pulldown': 'lat-pulldown',
+  'close-grip-pulldown': 'lat-pulldown',
+  'machine-row': 'machine-row',
+  'cable-row': 'chest-row',
+  'db-row': 'single-arm-row',
+  'wide-pulldown': 'lat-pulldown',
+  'single-arm-pulldown': 'lat-pulldown',
+  'db-curl': 'ez-curl',
+  'cable-curl': 'ez-curl',
+  'preacher-curl': 'ez-curl',
+  'incline-db-alt': 'incline-db',
+  'incline-machine-alt': 'incline-machine-alt',
+  'machine-shoulder-press': 'machine-shoulder-press',
+  'smith-shoulder-press': 'shoulder-press',
+  'arnold-press': 'shoulder-press',
+  'pec-deck': 'pec-deck',
+  'db-fly': 'cable-fly',
+  'skullcrusher': 'overhead-ext',
+  'single-arm-overhead-ext': 'overhead-ext',
+  'machine-tbar': 'machine-tbar',
+  'chest-supported-tbar': 'tbar',
+  'single-arm-db-row-alt': 'single-arm-row',
+  'machine-single-arm-row': 'machine-single-arm-row',
+  'machine-pullover': 'machine-pullover',
+  'rope-pulldown': 'pullover',
+  'rope-hammer-curl': 'hammer-curl',
+  'cross-body-hammer-curl': 'hammer-curl'
+};
+
+export function getExerciseGuide(exerciseId: string) {
+  return exerciseGuides[exerciseId] ?? exerciseGuides[exerciseGuideAliases[exerciseId]] ?? null;
+}
 
 export function formatRest(seconds: number) {
   const safeSeconds = Math.max(0, seconds);
