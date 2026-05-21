@@ -841,6 +841,8 @@ export function WorkoutTracker() {
         {exercisesForDay.map((ex) => {
           const sets = setState[ex.id] ?? [];
           const completed = sets.filter((s) => s.completed).length;
+          const exerciseHistory = progressByExercise.get(ex.id) ?? [];
+          const topPr = exerciseHistory.length > 0 ? Math.max(...exerciseHistory.map((entry) => entry.maxWeight)) : null;
           return (
             <article className="exerciseCardList" key={ex.id}>
               <div className="ehd">
@@ -859,6 +861,7 @@ export function WorkoutTracker() {
                 <div className="stat"><div className="l">Sets</div><div className="v">{ex.sets}</div></div>
                 <div className="stat"><div className="l">Reps</div><div className="v">{ex.reps}</div></div>
                 <div className="stat"><div className="l">Done</div><div className="v">{completed}/{ex.sets}</div></div>
+                <div className="stat pr"><div className="l">Top PR</div><div className="v">{topPr ? `${topPr} lb` : '—'}</div></div>
               </div>
             </article>
           );
